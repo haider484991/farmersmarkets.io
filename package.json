@@ -1,0 +1,45 @@
+{
+  "name": "farmersmarkets.io",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:generate-types": "npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > types/supabase.ts",
+    "import:usda": "npx tsx scripts/import/01-import-usda-data.ts",
+    "import:filter": "npx tsx scripts/import/02-filter-top-5000.ts",
+    "import:slugs": "npx tsx scripts/import/03-generate-slugs.ts",
+    "import:locations": "npx tsx scripts/import/04-create-locations.ts",
+    "enrich:outscraper": "npx tsx scripts/enrich/05-enrich-outscraper.ts",
+    "enrich:photos": "npx tsx scripts/enrich/06-download-photos.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.4",
+    "@types/leaflet": "^1.9.21",
+    "dotenv": "^17.2.3",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.474.0",
+    "mapbox-gl": "^3.10.0",
+    "next": "16.1.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-leaflet": "^5.0.0",
+    "slugify": "^1.6.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.4",
+    "supabase": "^2.72.8",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  }
+}
