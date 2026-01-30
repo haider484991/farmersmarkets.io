@@ -69,6 +69,9 @@ export const metadata: Metadata = {
     },
   },
   category: "Food & Drink",
+  verification: {
+    google: "Md58xNR6UmA8giVrK2VU9M86wwq18i6C_CI48I8zp98",
+  },
 };
 
 // JSON-LD Structured Data for Organization and WebSite
