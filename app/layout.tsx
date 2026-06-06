@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
+import { ADSENSE_CLIENT_ID, ADSENSE_SCRIPT_SRC } from "@/lib/adsense";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -72,6 +74,10 @@ export const metadata: Metadata = {
   verification: {
     google: "Md58xNR6UmA8giVrK2VU9M86wwq18i6C_CI48I8zp98",
   },
+  other: {
+    // Google AdSense site verification meta tag.
+    "google-adsense-account": ADSENSE_CLIENT_ID,
+  },
 };
 
 // JSON-LD Structured Data for Organization and WebSite
@@ -127,6 +133,14 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {/* Google AdSense loader — required for ad serving and AdSense site review. */}
+        <Script
+          id="google-adsense"
+          async
+          src={ADSENSE_SCRIPT_SRC}
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
       </head>
       <body className={`${inter.className} antialiased bg-gray-50 text-gray-900`}>
