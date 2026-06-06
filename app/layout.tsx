@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -134,13 +133,13 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {/* Google AdSense loader — required for ad serving and AdSense site review. */}
-        <Script
-          id="google-adsense"
+        {/* Google AdSense loader — required for ad serving and AdSense site review.
+            Plain <script> so it is server-rendered into the raw <head> exactly as
+            AdSense's crawler expects. */}
+        <script
           async
           src={ADSENSE_SCRIPT_SRC}
           crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
       </head>
       <body className={`${inter.className} antialiased bg-gray-50 text-gray-900`}>
