@@ -30,16 +30,18 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
   // Find city
   const { data: cityLocation } = await supabase
     .from('locations')
-    .select('name')
+    .select('name, market_count')
     .eq('type', 'city')
     .eq('slug', citySlug)
     .eq('state_code', stateLocation.state_code)
-    .single() as { data: Pick<Location, 'name'> | null; error: unknown }
+    .single() as { data: Pick<Location, 'name' | 'market_count'> | null; error: unknown }
 
   if (!cityLocation) return {}
 
   const cityName = cityLocation.name
   const stateName = stateLocation.name
+  // Don't let empty "no markets found" city pages into the index — they're thin.
+  const hasMarkets = (cityLocation.market_count ?? 0) > 0
 
   return {
     title: `Farmers Markets in ${cityName}, ${stateName}: Hours & Directions`,
@@ -47,6 +49,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
     alternates: {
       canonical: `/${stateSlug}/${citySlug}`,
     },
+    robots: hasMarkets ? undefined : { index: false, follow: true },
     openGraph: {
       title: `Farmers Markets in ${cityName}, ${stateName} | FarmersMarkets.io`,
       description: `Discover farmers markets in ${cityName}. Fresh produce, local vendors, and community markets.`,

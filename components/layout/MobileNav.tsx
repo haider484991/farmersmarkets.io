@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, Search, Heart, User, LogOut, Info, Plus } from 'lucide-react'
+import { MapPin, Search, Heart, User, LogOut, Info, Plus, BookOpen } from 'lucide-react'
 
 interface MobileNavProps {
   isOpen: boolean
@@ -38,6 +38,14 @@ export function MobileNav({ isOpen, onClose, user }: MobileNavProps) {
         >
           <Search className="h-5 w-5" />
           Search Markets
+        </Link>
+        <Link
+          href="/guides"
+          className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+          onClick={onClose}
+        >
+          <BookOpen className="h-5 w-5" />
+          Guides
         </Link>
         <Link
           href="/about"

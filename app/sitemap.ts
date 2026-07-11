@@ -1,10 +1,27 @@
 import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getGuideSlugs } from '@/lib/guides'
 import type { Location, Market } from '@/types/database'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Must match the live host (www) so sitemap URLs don't 301/307-redirect.
   const baseUrl = 'https://www.farmersmarkets.io'
+
+  // Editorial guides — static, no DB needed, so always included.
+  const guidePages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/guides`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    ...getGuideSlugs().map((slug) => ({
+      url: `${baseUrl}/guides/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+  ]
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -107,9 +124,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       })) || []
 
-    return [...staticPages, ...statePages, ...cityPages, ...marketPages]
+    return [...staticPages, ...guidePages, ...statePages, ...cityPages, ...marketPages]
   } catch (error) {
     console.error('Error generating sitemap:', error)
-    return staticPages
+    return [...staticPages, ...guidePages]
   }
 }

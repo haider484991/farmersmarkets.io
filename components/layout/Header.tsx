@@ -45,6 +45,12 @@ export function Header({ user }: HeaderProps) {
               Search
             </Link>
             <Link
+              href="/guides"
+              className="text-sm font-medium text-gray-700 hover:text-green-600 transition-colors"
+            >
+              Guides
+            </Link>
+            <Link
               href="/about"
               className="text-sm font-medium text-gray-700 hover:text-green-600 transition-colors"
             >

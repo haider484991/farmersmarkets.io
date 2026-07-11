@@ -16,6 +16,13 @@ const footerLinks = {
     { name: 'Pennsylvania', href: '/pennsylvania' },
     { name: 'Illinois', href: '/illinois' },
   ],
+  resources: [
+    { name: 'All Guides', href: '/guides' },
+    { name: "What's in Season", href: '/guides/seasonal-produce-guide' },
+    { name: 'Using SNAP/EBT', href: '/guides/snap-ebt-farmers-markets' },
+    { name: 'Beginner’s Guide', href: '/guides/beginners-guide' },
+    { name: 'Become a Vendor', href: '/guides/become-a-vendor' },
+  ],
   company: [
     { name: 'About Us', href: '/about' },
     { name: 'Contact', href: '/contact' },
@@ -28,7 +35,7 @@ export function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
@@ -72,6 +79,25 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               {footerLinks.popular.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm hover:text-green-400 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Resources / Guides */}
+          <div>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
+              Resources
+            </h3>
+            <ul className="space-y-2">
+              {footerLinks.resources.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
