@@ -51,13 +51,13 @@ export function BreadcrumbSchema({ items }: BreadcrumbsProps) {
       '@type': 'ListItem',
       position: 1,
       name: 'Home',
-      item: 'https://farmersmarkets.io',
+      item: 'https://www.farmersmarkets.io',
     },
     ...items.map((item, index) => ({
       '@type': 'ListItem',
       position: index + 2,
       name: item.label,
-      item: item.href ? `https://farmersmarkets.io${item.href}` : undefined,
+      item: item.href ? `https://www.farmersmarkets.io${item.href}` : undefined,
     })),
   ]
 

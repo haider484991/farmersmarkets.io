@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     'Terms of Service for FarmersMarkets.io — the rules and conditions that govern your use of our farmers market directory.',
   alternates: {
-    canonical: 'https://farmersmarkets.io/terms',
+    canonical: 'https://www.farmersmarkets.io/terms',
   },
 }
 

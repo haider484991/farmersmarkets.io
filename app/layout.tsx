@@ -38,14 +38,15 @@ export const metadata: Metadata = {
   authors: [{ name: "FarmersMarkets.io" }],
   creator: "FarmersMarkets.io",
   publisher: "FarmersMarkets.io",
-  metadataBase: new URL("https://farmersmarkets.io"),
-  alternates: {
-    canonical: "https://farmersmarkets.io",
-  },
+  metadataBase: new URL("https://www.farmersmarkets.io"),
+  // NOTE: no site-wide `alternates.canonical` here on purpose — a static value
+  // in the root layout is inherited by every route and made all 4,300 pages
+  // canonicalize to the homepage. Each page now sets its own self-referencing
+  // canonical; pages without one self-canonicalize to their own URL by default.
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://farmersmarkets.io",
+    url: "https://www.farmersmarkets.io",
     siteName: "FarmersMarkets.io",
     title: "FarmersMarkets.io - Find Local Farmers Markets Near You",
     description:
@@ -85,30 +86,30 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://farmersmarkets.io/#organization",
+      "@id": "https://www.farmersmarkets.io/#organization",
       name: "FarmersMarkets.io",
-      url: "https://farmersmarkets.io",
+      url: "https://www.farmersmarkets.io",
       logo: {
         "@type": "ImageObject",
-        url: "https://farmersmarkets.io/icon.png",
+        url: "https://www.farmersmarkets.io/icon.png",
       },
       sameAs: [],
       description: "The comprehensive directory of farmers markets across the United States.",
     },
     {
       "@type": "WebSite",
-      "@id": "https://farmersmarkets.io/#website",
-      url: "https://farmersmarkets.io",
+      "@id": "https://www.farmersmarkets.io/#website",
+      url: "https://www.farmersmarkets.io",
       name: "FarmersMarkets.io",
       description: "Find local farmers markets near you",
       publisher: {
-        "@id": "https://farmersmarkets.io/#organization",
+        "@id": "https://www.farmersmarkets.io/#organization",
       },
       potentialAction: {
         "@type": "SearchAction",
         target: {
           "@type": "EntryPoint",
-          urlTemplate: "https://farmersmarkets.io/search?q={search_term_string}",
+          urlTemplate: "https://www.farmersmarkets.io/search?q={search_term_string}",
         },
         "query-input": "required name=search_term_string",
       },

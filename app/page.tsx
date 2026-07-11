@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, Search, Star, Clock, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -6,6 +7,10 @@ import { MarketList } from '@/components/market/MarketList'
 import { Button } from '@/components/ui/Button'
 import { STATE_NAMES } from '@/lib/utils'
 import type { Market, Location } from '@/types/database'
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
 
 export const revalidate = 3600 // Revalidate every hour
 

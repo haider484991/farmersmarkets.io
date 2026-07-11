@@ -1,5 +1,6 @@
 import type { Market, MarketSchedule } from '@/types/database'
 import { DAYS_OF_WEEK, formatDay } from '@/lib/utils'
+import { buildMarketFaqs } from '@/lib/content'
 
 interface MarketSchemaProps {
   market: Market
@@ -25,11 +26,11 @@ export function MarketSchema({ market }: MarketSchemaProps) {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    '@id': `https://farmersmarkets.io/market/${market.slug}`,
+    '@id': `https://www.farmersmarkets.io/market/${market.slug}`,
     name: market.name,
     description: market.description || market.meta_description,
     image: market.featured_image || (market.photos as string[])?.[0],
-    url: `https://farmersmarkets.io/market/${market.slug}`,
+    url: `https://www.farmersmarkets.io/market/${market.slug}`,
     telephone: market.phone,
     address: {
       '@type': 'PostalAddress',
@@ -75,27 +76,12 @@ export function MarketSchema({ market }: MarketSchemaProps) {
   )
 }
 
-// FAQ Schema for market pages
+// FAQ Schema for market pages — built from the SAME real-data source as the
+// visible FAQ section so the structured data always matches the page.
 export function MarketFAQSchema({ market }: MarketSchemaProps) {
-  const faqs = [
-    {
-      question: `Where is ${market.name} located?`,
-      answer: `${market.name} is located at ${market.address || ''} ${market.city}, ${market.state} ${market.zip_code || ''}`.trim(),
-    },
-    {
-      question: `What are the hours for ${market.name}?`,
-      answer: market.schedule
-        ? `${market.name} operates on select days during market season. Check the listing for specific hours.`
-        : `Contact ${market.name} directly for current operating hours.`,
-    },
-  ]
+  const faqs = buildMarketFaqs(market)
 
-  if (market.phone) {
-    faqs.push({
-      question: `How can I contact ${market.name}?`,
-      answer: `You can reach ${market.name} by phone at ${market.phone}${market.website ? ` or visit their website at ${market.website}` : ''}.`,
-    })
-  }
+  if (faqs.length === 0) return null
 
   const schema = {
     '@context': 'https://schema.org',

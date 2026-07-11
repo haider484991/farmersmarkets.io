@@ -3,7 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import type { Location, Market } from '@/types/database'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://farmersmarkets.io'
+  // Must match the live host (www) so sitemap URLs don't 301/307-redirect.
+  const baseUrl = 'https://www.farmersmarkets.io'
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

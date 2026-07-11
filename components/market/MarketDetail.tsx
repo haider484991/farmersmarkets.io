@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import type { Market, MarketSchedule, MarketProducts, PaymentMethods, SeoFeature } from '@/types/database'
 import { formatPhone, formatDay, DAYS_OF_WEEK, type DayOfWeek } from '@/lib/utils'
+import { generateMarketDescription } from '@/lib/content'
 import { Button } from '@/components/ui/Button'
 import { FavoriteButton } from './FavoriteButton'
 import { SingleMarketMap } from '@/components/map/MapView'
@@ -174,12 +175,14 @@ export function MarketDetail({ market, userId, isFavorited = false }: MarketDeta
         </div>
       </div>
 
-      {/* Description */}
-      {market.description && (
-        <div className="prose prose-gray max-w-none">
-          <p>{market.description}</p>
-        </div>
-      )}
+      {/* About — unique, data-driven description (always rendered so every
+          market page carries distinct body content) */}
+      <div className="prose prose-gray max-w-none">
+        <h2 className="not-prose text-xl font-semibold text-gray-900 mb-2">
+          About {market.name}
+        </h2>
+        <p>{generateMarketDescription(market)}</p>
+      </div>
 
       {/* Dynamic SEO Features - Unique Market Highlights */}
       {features.length > 0 && (

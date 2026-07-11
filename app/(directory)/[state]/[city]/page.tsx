@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketList } from '@/components/market/MarketList'
 import { STATE_NAMES } from '@/lib/utils'
+import { generateCityIntro } from '@/lib/content'
 import type { Location, Market } from '@/types/database'
 
 interface CityPageProps {
@@ -41,11 +42,15 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
   const stateName = stateLocation.name
 
   return {
-    title: `Farmers Markets in ${cityName}, ${stateName}`,
+    title: `Farmers Markets in ${cityName}, ${stateName}: Hours & Directions`,
     description: `Find farmers markets in ${cityName}, ${stateName}. Browse local markets with fresh produce, artisan goods, hours, and directions.`,
+    alternates: {
+      canonical: `/${stateSlug}/${citySlug}`,
+    },
     openGraph: {
       title: `Farmers Markets in ${cityName}, ${stateName} | FarmersMarkets.io`,
       description: `Discover farmers markets in ${cityName}. Fresh produce, local vendors, and community markets.`,
+      url: `/${stateSlug}/${citySlug}`,
     },
   }
 }
@@ -178,28 +183,15 @@ export default async function CityPage({ params }: CityPageProps) {
           </div>
         )}
 
-        {/* SEO Content */}
+        {/* SEO Content — unique, data-driven per city */}
         <div className="mt-12 bg-white rounded-xl border border-gray-200 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             About Farmers Markets in {cityName}
           </h2>
           <div className="prose prose-gray max-w-none">
-            <p>
-              {cityName}, {stateName} has {markets?.length || 'several'} farmers
-              market{markets?.length !== 1 ? 's' : ''} offering fresh, local
-              produce and artisan goods to the community.
-            </p>
-            <p>
-              Shopping at farmers markets in {cityName} supports local farmers
-              and food producers while providing access to seasonal fruits and
-              vegetables, locally-raised meats, dairy products, baked goods, and
-              unique handcrafted items.
-            </p>
-            <p>
-              Visit a farmers market in {cityName} to experience the best of
-              local food and community. Check individual market listings for
-              hours, location, and products available.
-            </p>
+            {generateCityIntro(cityName, stateName, markets || []).map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
           </div>
         </div>
       </div>

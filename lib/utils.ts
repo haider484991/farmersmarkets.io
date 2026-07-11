@@ -1,3 +1,13 @@
+// Canonical site origin. The live site is served on the www host, so every
+// canonical URL, sitemap entry, and JSON-LD @id MUST use this exact origin.
+export const SITE_URL = 'https://www.farmersmarkets.io'
+
+/** Build an absolute canonical URL from a path (e.g. '/market/foo'). */
+export function canonicalUrl(path = ''): string {
+  if (!path || path === '/') return SITE_URL
+  return `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`
+}
+
 // Type for classname values
 type ClassValue = string | undefined | null | false | ClassValue[]
 

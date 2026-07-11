@@ -17,6 +17,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // Force the apex host to the canonical www host with a PERMANENT (308)
+      // redirect so link equity consolidates. (The host may also do this; a
+      // permanent redirect here guarantees it and replaces any 307.)
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'farmersmarkets.io' }],
+        destination: 'https://www.farmersmarkets.io/:path*',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     return [
       {

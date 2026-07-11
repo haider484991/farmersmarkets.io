@@ -3,10 +3,12 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketDetail } from '@/components/market/MarketDetail'
+import { NearbyMarkets } from '@/components/market/NearbyMarkets'
 import { MarketSchema, MarketFAQSchema } from '@/components/seo/MarketSchema'
 import { ReviewList } from '@/components/reviews/ReviewList'
 import { ReviewForm, ReviewLoginPrompt } from '@/components/reviews/ReviewForm'
-import { getStateSlug } from '@/lib/utils'
+import { getStateSlug, calculateDistance } from '@/lib/utils'
+import { buildMarketFaqs } from '@/lib/content'
 import type { Market, Review } from '@/types/database'
 
 interface MarketPageProps {
@@ -26,12 +28,17 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
 
   if (!market) return {}
 
-  // Prefer SEO-optimized title/description, fallback to meta, then generate default
-  const title = market.seo_title || market.meta_title || `${market.name} - Farmers Market in ${market.city}, ${market.state_code}`
+  // Prefer SEO-optimized title/description, fallback to meta, then generate default.
+  // Fallback leads with the hooks people actually search ("hours", "schedule",
+  // "directions") — see GSC query data — to lift CTR on near-miss rankings.
+  const title =
+    market.seo_title ||
+    market.meta_title ||
+    `${market.name}: Hours, Schedule & Directions | ${market.city}, ${market.state_code}`
   const description =
     market.seo_description ||
     market.meta_description ||
-    `Visit ${market.name} in ${market.city}, ${market.state}. Find hours, directions, products, and reviews for this local farmers market.`
+    `${market.name} in ${market.city}, ${market.state} — see days and hours, what's in season, directions, accepted payments, and reviews for this local farmers market.`
 
   // Use dynamic keywords if available
   const keywords = market.seo_keywords || [
@@ -46,10 +53,14 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
     title,
     description,
     keywords,
+    alternates: {
+      canonical: `/market/${slug}`,
+    },
     openGraph: {
       title,
       description,
       type: 'website',
+      url: `/market/${slug}`,
       images: market.featured_image ? [{ url: market.featured_image }] : undefined,
     },
     twitter: {
@@ -104,6 +115,50 @@ export default async function MarketPage({ params }: MarketPageProps) {
     isFavorited = !!favorite
   }
 
+  // Nearby markets — real internal links to the closest markets (SEO + UX).
+  // Bounding-box query (~50mi) then sort by true distance; fall back to
+  // top-rated markets in the same state when coordinates are missing.
+  let nearbyMarkets: (Market & { _distance?: number })[] = []
+  if (market.latitude && market.longitude) {
+    const lat = Number(market.latitude)
+    const lng = Number(market.longitude)
+    const box = 0.75 // ~50 miles of latitude
+    const { data: candidates } = await supabase
+      .from('markets')
+      .select('*')
+      .eq('is_active', true)
+      .neq('id', market.id)
+      .gte('latitude', lat - box)
+      .lte('latitude', lat + box)
+      .gte('longitude', lng - box)
+      .lte('longitude', lng + box)
+      .limit(50) as { data: Market[] | null; error: unknown }
+    nearbyMarkets = (candidates || [])
+      .map((m) => ({
+        ...m,
+        _distance:
+          m.latitude && m.longitude
+            ? calculateDistance(lat, lng, Number(m.latitude), Number(m.longitude))
+            : 9999,
+      }))
+      .sort((a, b) => (a._distance ?? 9999) - (b._distance ?? 9999))
+      .slice(0, 6)
+  }
+  if (nearbyMarkets.length === 0 && market.state_code) {
+    const { data: candidates } = await supabase
+      .from('markets')
+      .select('*')
+      .eq('is_active', true)
+      .eq('state_code', market.state_code)
+      .neq('id', market.id)
+      .order('google_rating', { ascending: false, nullsFirst: false })
+      .limit(6) as { data: Market[] | null; error: unknown }
+    nearbyMarkets = candidates || []
+  }
+
+  // Real FAQ Q&A from actual market data (also emitted as FAQPage schema).
+  const faqs = buildMarketFaqs(market)
+
   const stateSlug = getStateSlug(market.state_code || '')
   const breadcrumbs = [
     { label: 'States', href: '/states' },
@@ -137,6 +192,23 @@ export default async function MarketPage({ params }: MarketPageProps) {
           isFavorited={isFavorited}
         />
 
+        {/* FAQ — visible content that mirrors the FAQPage structured data */}
+        {faqs.length > 0 && (
+          <section className="mt-12 bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-6">
+              {faqs.map((faq, i) => (
+                <div key={i}>
+                  <h3 className="font-semibold text-gray-900">{faq.question}</h3>
+                  <p className="mt-1 text-gray-600">{faq.answer}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Reviews Section */}
         <section className="mt-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -165,19 +237,27 @@ export default async function MarketPage({ params }: MarketPageProps) {
           </div>
         </section>
 
-        {/* Nearby Markets (placeholder for future implementation) */}
-        <section className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Other Markets in {market.city}
-          </h2>
-          <p className="text-gray-500">
-            View more farmers markets in{' '}
+        {/* Nearby Markets — real internal links to the closest markets */}
+        <NearbyMarkets markets={nearbyMarkets} cityLabel={market.city || undefined} />
+
+        {/* Hub links for crawl depth */}
+        <section className="mt-8">
+          <p className="text-gray-600">
+            Looking for more? Browse all{' '}
             <a
               href={`/${stateSlug}/${market.city?.toLowerCase().replace(/\s+/g, '-')}`}
-              className="text-green-600 hover:underline"
+              className="text-green-600 hover:underline font-medium"
             >
-              {market.city}, {market.state_code}
+              farmers markets in {market.city}, {market.state_code}
+            </a>{' '}
+            or explore{' '}
+            <a
+              href={`/${stateSlug}`}
+              className="text-green-600 hover:underline font-medium"
+            >
+              {market.state}
             </a>
+            .
           </p>
         </section>
       </div>

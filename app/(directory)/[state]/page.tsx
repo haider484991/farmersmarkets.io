@@ -7,6 +7,7 @@ import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketList } from '@/components/market/MarketList'
 import { Button } from '@/components/ui/Button'
 import { STATE_NAMES, getStateCode } from '@/lib/utils'
+import { generateStateIntro } from '@/lib/content'
 import type { Location, Market } from '@/types/database'
 
 interface StatePageProps {
@@ -22,11 +23,15 @@ export async function generateMetadata({ params }: StatePageProps): Promise<Meta
   if (!stateName) return {}
 
   return {
-    title: `Farmers Markets in ${stateName}`,
+    title: `Farmers Markets in ${stateName}: Locations, Hours & Directions`,
     description: `Find farmers markets in ${stateName}. Browse local markets with fresh produce, artisan goods, and more. Get directions, hours, and contact information.`,
+    alternates: {
+      canonical: `/${stateSlug}`,
+    },
     openGraph: {
       title: `Farmers Markets in ${stateName} | FarmersMarkets.io`,
       description: `Discover farmers markets across ${stateName}. Fresh produce, local vendors, and community events.`,
+      url: `/${stateSlug}`,
     },
   }
 }
@@ -164,29 +169,20 @@ export default async function StatePage({ params }: StatePageProps) {
           </div>
         </div>
 
-        {/* SEO Content */}
+        {/* SEO Content — unique, data-driven per state */}
         <div className="mt-16 bg-white rounded-xl border border-gray-200 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             About Farmers Markets in {stateName}
           </h2>
           <div className="prose prose-gray max-w-none">
-            <p>
-              {stateName} is home to {totalMarkets?.toLocaleString() || 'many'}{' '}
-              farmers markets offering fresh, locally-grown produce and artisan
-              goods. From small community markets to large urban gatherings, you
-              can find a wide variety of options throughout the state.
-            </p>
-            <p>
-              Farmers markets in {stateName} typically offer seasonal fruits and
-              vegetables, locally-raised meats, dairy products, baked goods,
-              honey, flowers, and handcrafted items. Many markets also feature
-              live music, cooking demonstrations, and family-friendly activities.
-            </p>
-            <p>
-              Use our directory to find farmers markets near you in {stateName}.
-              Each listing includes the market&apos;s address, operating hours,
-              products available, and accepted payment methods including SNAP/EBT.
-            </p>
+            {generateStateIntro(
+              stateName,
+              totalMarkets || 0,
+              cities || [],
+              markets || []
+            ).map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
           </div>
         </div>
 

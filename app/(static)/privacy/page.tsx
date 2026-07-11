@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     'Privacy Policy for FarmersMarkets.io — how we collect, use, and protect your information, including our use of cookies and third-party advertising such as Google AdSense.',
   alternates: {
-    canonical: 'https://farmersmarkets.io/privacy',
+    canonical: 'https://www.farmersmarkets.io/privacy',
   },
 }
 
