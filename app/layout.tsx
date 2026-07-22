@@ -143,6 +143,12 @@ export default async function RootLayout({
           src={ADSENSE_SCRIPT_SRC}
           crossOrigin="anonymous"
         />
+        {/* Ahrefs Web Analytics */}
+        <script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="Te/I4AbsjGNIz3rAdTZfGw"
+          async
+        />
       </head>
       <body className={`${inter.className} antialiased bg-gray-50 text-gray-900`}>
         <div className="flex min-h-screen flex-col">
