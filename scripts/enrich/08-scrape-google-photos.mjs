@@ -97,9 +97,52 @@ function normalizeName(x) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-    .replace(/['’`.,\-()]/g, '')
+    .replace(/['’`]/g, '')
+    // Separators become spaces so "Fitchburg/Burbank" splits into two tokens.
+    .replace(/[./,\-()&:;|@+]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/** Levenshtein distance, capped early — we only care about "almost identical". */
+function editDistance(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 99
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    let last = prev[0]
+    prev[0] = i
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = prev[j]
+      prev[j] = Math.min(
+        prev[j] + 1,
+        prev[j - 1] + 1,
+        last + (a[i - 1] === b[j - 1] ? 0 : 1)
+      )
+      last = tmp
+    }
+  }
+  return prev[b.length]
+}
+
+/**
+ * Token match tolerant of the typos in the USDA source data
+ * (e.g. "fayettevill" vs "fayetteville"). Only fires on long, near-identical
+ * words so distinct businesses never match.
+ */
+function tokenMatches(word, set) {
+  if (set.has(word)) return true
+  if (word.length < 6) return false
+  for (const other of set) {
+    if (other.length >= 6 && editDistance(word, other) <= 1) return true
+  }
+  return false
+}
+
+/** Does the matched business actually look like a market/farm? */
+function looksLikeMarket(name) {
+  return /\b(market|farm|farmers|grower|growers|produce|orchard|bazaar|greenmarket)\b/i.test(
+    name || ''
+  )
 }
 
 /** Distinctive tokens = the words that actually identify this market. */
@@ -112,20 +155,41 @@ function distinctiveTokens(name) {
   )
 }
 
-/** Fraction of our distinctive tokens present in the matched name. */
+/**
+ * How confident are we that Google matched OUR market?
+ *
+ * Two accept paths, both required to be safe against near-miss businesses:
+ *  1. Most of our distinctive tokens appear in Google's name.
+ *  2. Google's name is fully contained in ours — our record just carries extra
+ *     qualifiers ("Federal Way Farmers Market - Town Square" vs Google's
+ *     "Federal Way Farmers Market"). Containment must be total, so an unrelated
+ *     business ("Christian's Mattress Xpress") still fails on its own tokens.
+ */
 function nameSimilarity(dbName, googleName) {
   const A = distinctiveTokens(dbName)
   const B = distinctiveTokens(googleName)
-  if (!A.size) {
-    // Nothing distinctive (e.g. "Farmers Market") — fall back to full strings.
+  if (!A.size || !B.size) {
+    // Nothing distinctive (e.g. plain "Farmers Market") — compare full strings.
     const a = normalizeName(dbName)
     const b = normalizeName(googleName)
     return a && b && (b.includes(a) || a.includes(b)) ? 1 : 0
   }
-  if (!B.size) return 0
   let hit = 0
-  for (const w of A) if (B.has(w)) hit++
-  return hit / A.size
+  for (const w of A) if (tokenMatches(w, B)) hit++
+  const forward = hit / A.size
+
+  // Path 2: every one of Google's distinctive tokens is in our name.
+  let backHit = 0
+  for (const w of B) if (tokenMatches(w, A)) backHit++
+  const googleSubsetOfOurs = backHit === B.size
+
+  // Weak evidence: our name has a single distinctive word (usually just a town,
+  // e.g. "Springfield Farmers Market"). Any business in that town would match on
+  // it, so also require the match to actually look like a market — otherwise
+  // "Springfield Mall" sails through.
+  if (A.size === 1 && !googleSubsetOfOurs && !looksLikeMarket(googleName)) return 0
+
+  return googleSubsetOfOurs ? Math.max(forward, 1) : forward
 }
 
 async function handleConsent(page) {
@@ -349,7 +413,14 @@ async function run() {
   if (DRY_RUN) console.log('(DRY RUN — nothing written.)')
 }
 
-run().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})
+// Exported for unit-testing the match logic without launching a browser.
+export { nameSimilarity, distinctiveTokens, normalizeName }
+
+// Only scrape when executed directly (not when imported by a test).
+const invokedDirectly = process.argv[1] && process.argv[1].endsWith('08-scrape-google-photos.mjs')
+if (invokedDirectly) {
+  run().catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
+}
