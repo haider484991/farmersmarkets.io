@@ -13,7 +13,8 @@
     "import:slugs": "npx tsx scripts/import/03-generate-slugs.ts",
     "import:locations": "npx tsx scripts/import/04-create-locations.ts",
     "enrich:outscraper": "npx tsx scripts/enrich/05-enrich-outscraper.ts",
-    "enrich:photos": "npx tsx scripts/enrich/06-download-photos.ts"
+    "enrich:photos": "npx tsx scripts/enrich/06-download-photos.ts",
+    "enrich:google-photos": "npx tsx scripts/enrich/07-enrich-google-photos.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
