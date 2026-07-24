@@ -27,8 +27,25 @@ const supabase = createClient(
 const DRY_RUN = process.env.DRY_RUN === '1'
 const LIMIT = process.env.LIMIT ? parseInt(process.env.LIMIT, 10) : 150
 const HEADFUL = process.env.HEADFUL === '1'
+// Parallel workers. Measured: 5 workers throttles after ~150 markets (Google
+// silently stops serving photos). 3 is the sustainable sweet spot.
+const CONCURRENCY = process.env.CONCURRENCY ? parseInt(process.env.CONCURRENCY, 10) : 3
+// Throttle detection: this many consecutive photo-less markets means Google has
+// soft-blocked us (it returns pages with no photos rather than an error).
+const THROTTLE_STREAK = process.env.THROTTLE_STREAK
+  ? parseInt(process.env.THROTTLE_STREAK, 10)
+  : 35
+const COOLDOWN_MS = process.env.COOLDOWN_MS ? parseInt(process.env.COOLDOWN_MS, 10) : 240000
+const MAX_COOLDOWNS = process.env.MAX_COOLDOWNS ? parseInt(process.env.MAX_COOLDOWNS, 10) : 3
 const MAX_PHOTOS = 4
-const NAV_DELAY_MS = 1500
+// Per-worker pause between markets (effective request rate = CONCURRENCY / this).
+const NAV_DELAY_MS = process.env.NAV_DELAY_MS ? parseInt(process.env.NAV_DELAY_MS, 10) : 600
+// How long to let the page settle after the first photo appears. Too low and
+// lazy-loaded photos are missed; too high wastes time.
+const SETTLE_MS = process.env.SETTLE_MS ? parseInt(process.env.SETTLE_MS, 10) : 600
+const SELECTOR_TIMEOUT = process.env.SELECTOR_TIMEOUT
+  ? parseInt(process.env.SELECTOR_TIMEOUT, 10)
+  : 6000
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -61,6 +78,56 @@ async function extractPhotos(page) {
   })
 }
 
+// --- Name verification -------------------------------------------------
+// Google search often returns a DIFFERENT nearby business (measured: ~30-40% of
+// the time). Attaching that business's photos to a market is bad data, so we
+// compare the matched place name against ours and reject weak matches.
+// 0.7 measured as the accuracy/yield sweet spot: 0.6 let through cross-town
+// matches (e.g. "Feria Agrícola de Luquillo" → "...Valle De Lajas"). Wrong
+// photos are worse than no photos, so we err toward rejecting.
+const MATCH_THRESHOLD = process.env.MATCH_THRESHOLD
+  ? parseFloat(process.env.MATCH_THRESHOLD)
+  : 0.7
+
+const STOPWORDS =
+  /\b(the|a|an|of|at|on|in|and|association|assoc|inc|llc|co|company|market|markets|farmers|farmer|farm|growers|grower)\b/g
+
+function normalizeName(x) {
+  return (x || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/['’`.,\-()]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** Distinctive tokens = the words that actually identify this market. */
+function distinctiveTokens(name) {
+  return new Set(
+    normalizeName(name)
+      .replace(STOPWORDS, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length > 2)
+  )
+}
+
+/** Fraction of our distinctive tokens present in the matched name. */
+function nameSimilarity(dbName, googleName) {
+  const A = distinctiveTokens(dbName)
+  const B = distinctiveTokens(googleName)
+  if (!A.size) {
+    // Nothing distinctive (e.g. "Farmers Market") — fall back to full strings.
+    const a = normalizeName(dbName)
+    const b = normalizeName(googleName)
+    return a && b && (b.includes(a) || a.includes(b)) ? 1 : 0
+  }
+  if (!B.size) return 0
+  let hit = 0
+  for (const w of A) if (B.has(w)) hit++
+  return hit / A.size
+}
+
 async function handleConsent(page) {
   if (!/consent\.google\.com|consent\.youtube/.test(page.url())) return
   for (const label of ['Reject all', 'Accept all', 'I agree']) {
@@ -73,39 +140,75 @@ async function handleConsent(page) {
   }
 }
 
+/** Name of the place Google matched, plus the visible page text (for city check). */
+async function matchedPlaceInfo(page) {
+  return page.evaluate(() => {
+    const h1 = document.querySelector('h1')?.textContent?.trim() || ''
+    const card = document.querySelector('a[href*="/maps/place/"]')
+    const name =
+      h1 && !/^results$/i.test(h1) ? h1 : card?.getAttribute('aria-label')?.trim() || ''
+    return { name, text: (document.body.innerText || '').slice(0, 4000) }
+  })
+}
+
+/**
+ * A wrong match is usually in a different town, so require the market's city to
+ * appear somewhere on the page. Skipped when we have no city on record.
+ */
+function cityMatches(market, pageText) {
+  const city = normalizeName(market.city)
+  if (!city || city === '-') return true
+  return normalizeName(pageText).includes(city)
+}
+
+/**
+ * Returns { photos, matched, score }. Uses the SEARCH url — the place_id url
+ * reliably returns zero photos (measured), so search is the only path that
+ * yields anything. Accuracy is enforced by the caller via `score`.
+ */
 async function scrapeMarket(page, market) {
-  const usePlace = !!market.google_place_id
-  const url = usePlace
-    ? `https://www.google.com/maps/place/?q=place_id:${market.google_place_id}`
-    : `https://www.google.com/maps/search/${encodeURIComponent(
-        `${market.name} ${market.city || ''} ${market.state || ''}`
-      )}`
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
+  const query = `${market.name} ${market.city || ''} ${market.state || ''}`.trim()
+  await page.goto('https://www.google.com/maps/search/' + encodeURIComponent(query), {
+    waitUntil: 'domcontentloaded',
+    timeout: 30000,
+  })
   await handleConsent(page)
   await page
-    .waitForSelector('img[src*="googleusercontent"], img[src*="ggpht"]', { timeout: 8000 })
+    .waitForSelector('img[src*="googleusercontent"], img[src*="ggpht"]', { timeout: SELECTOR_TIMEOUT })
     .catch(() => {})
-  await sleep(1000)
+  await sleep(SETTLE_MS)
 
   let photos = await extractPhotos(page)
-  // Search often lands on a results list with no hero photo — open the first
-  // result to reach the place panel where the photos live.
-  if (photos.length === 0 && !usePlace) {
+  let info = await matchedPlaceInfo(page)
+
+  // Results list with no hero photo — open the first result for the place panel.
+  if (photos.length === 0) {
     const first = page.locator('a[href*="/maps/place/"]').first()
     if (await first.count().catch(() => 0)) {
       await first.click({ timeout: 5000 }).catch(() => {})
       await page
-        .waitForSelector('img[src*="googleusercontent"], img[src*="ggpht"]', { timeout: 8000 })
+        .waitForSelector('img[src*="googleusercontent"], img[src*="ggpht"]', { timeout: SELECTOR_TIMEOUT })
         .catch(() => {})
-      await sleep(1200)
+      await sleep(SETTLE_MS + 200)
       photos = await extractPhotos(page)
+      const next = await matchedPlaceInfo(page)
+      if (next.name) info = next
     }
   }
-  return photos.slice(0, MAX_PHOTOS)
+
+  return {
+    photos: photos.slice(0, MAX_PHOTOS),
+    matched: info.name,
+    score: nameSimilarity(market.name, info.name),
+    cityOk: cityMatches(market, info.text),
+  }
 }
 
 async function run() {
-  console.log(`\nGoogle Maps photo scraper ${DRY_RUN ? '(DRY RUN)' : '(LIVE)'} — limit ${LIMIT}`)
+  console.log(
+    `\nGoogle Maps photo scraper ${DRY_RUN ? '(DRY RUN)' : '(LIVE)'}` +
+      ` — limit ${LIMIT}, concurrency ${CONCURRENCY}`
+  )
 
   const { data: markets, error } = await supabase
     .from('markets')
@@ -131,49 +234,118 @@ async function run() {
   await context.addCookies([
     { name: 'SOCS', value: 'CAISNQgDEitib3gtMA', domain: '.google.com', path: '/' },
   ])
-  const page = await context.newPage()
-  // Block heavy resources we don't need (fonts/media) to speed things up.
-  await page.route('**/*', (route) => {
-    const t = route.request().resourceType()
-    if (t === 'font' || t === 'media') return route.abort()
-    route.continue()
-  })
-
   let withPhotos = 0
   let none = 0
   let failed = 0
+  let rejected = 0
+  let processed = 0
+  const started = Date.now()
+  const queue = [...markets]
 
-  for (const market of markets) {
-    try {
-      const photos = await scrapeMarket(page, market)
-      if (photos.length) {
-        withPhotos++
-        console.log(`  ✓ ${photos.length} photo(s): ${market.name}`)
-        if (!DRY_RUN) {
-          const { error: upErr } = await supabase
-            .from('markets')
-            .update({ featured_image: photos[0], photos })
-            .eq('id', market.id)
-          if (upErr) {
-            failed++
-            console.error(`    write failed: ${upErr.message}`)
-          }
-        } else {
-          console.log(`      ${photos[0].slice(0, 90)}`)
-        }
-      } else {
-        none++
-        console.log(`  · no photo: ${market.name}`)
-      }
-    } catch (e) {
-      failed++
-      console.error(`  ✗ ${market.name}: ${e.message}`)
+  // Shared throttle state across workers.
+  let noneStreak = 0
+  let cooldowns = 0
+  let cooldownUntil = 0
+  let aborted = false
+
+  // If we hit a long run of photo-less markets, Google is soft-blocking us.
+  // Pause everything, let the block lapse, then resume.
+  async function maybeCooldown() {
+    if (noneStreak < THROTTLE_STREAK || Date.now() < cooldownUntil) return
+    cooldowns++
+    if (cooldowns > MAX_COOLDOWNS) {
+      console.log(
+        `\n!! Throttled ${cooldowns}x — stopping so we don't waste the queue.` +
+          ` Remaining markets stay unprocessed and will be picked up next run.`
+      )
+      aborted = true
+      return
     }
-    await sleep(NAV_DELAY_MS)
+    cooldownUntil = Date.now() + COOLDOWN_MS
+    console.log(
+      `\n!! ${noneStreak} markets with no photos in a row — likely throttled.` +
+        ` Cooling down ${Math.round(COOLDOWN_MS / 1000)}s (${cooldowns}/${MAX_COOLDOWNS})...`
+    )
+    await sleep(COOLDOWN_MS)
+    noneStreak = 0
+    console.log('   resuming.\n')
   }
 
+  async function worker(id) {
+    const page = await context.newPage()
+    // Block bytes we never need. We only read img SRC strings from the DOM —
+    // the actual image/font/media downloads are pure waste, and skipping them
+    // is the single biggest speedup here.
+    await page.route('**/*', (route) => {
+      const t = route.request().resourceType()
+      if (t === 'image' || t === 'font' || t === 'media') return route.abort()
+      route.continue()
+    })
+
+    while (queue.length && !aborted) {
+      // Hold here while another worker is cooling down.
+      while (Date.now() < cooldownUntil && !aborted) await sleep(2000)
+      const market = queue.shift()
+      if (!market) break
+      try {
+        const { photos, matched, score, cityOk } = await scrapeMarket(page, market)
+        if (photos.length && score >= MATCH_THRESHOLD && cityOk) {
+          noneStreak = 0
+          withPhotos++
+          if (!DRY_RUN) {
+            const { error: upErr } = await supabase
+              .from('markets')
+              .update({ featured_image: photos[0], photos })
+              .eq('id', market.id)
+            if (upErr) {
+              failed++
+              console.error(`    write failed (${market.name}): ${upErr.message}`)
+            }
+          } else {
+            console.log(
+              `  ✓ ${photos.length} [${score.toFixed(2)}] ${market.name} → ${matched.slice(0, 40)}`
+            )
+          }
+        } else if (photos.length) {
+          // Photos found, but they belong to a different business — discard.
+          rejected++
+          noneStreak = 0
+          if (DRY_RUN) {
+            console.log(
+              `  ✗ REJECT [${score.toFixed(2)}${cityOk ? '' : ' city✗'}] ` +
+                `${market.name.slice(0, 30)} → ${matched.slice(0, 38)}`
+            )
+          }
+        } else {
+          none++
+          noneStreak++
+          await maybeCooldown()
+        }
+      } catch (e) {
+        failed++
+        console.error(`  ✗ ${market.name}: ${e.message}`)
+      }
+      processed++
+      if (processed % 25 === 0) {
+        const mins = (Date.now() - started) / 60000
+        console.log(
+          `  [${processed}/${markets.length}] photos=${withPhotos} rejected=${rejected} none=${none} failed=${failed}` +
+            ` streak=${noneStreak} — ${(processed / mins).toFixed(1)} markets/min`
+        )
+      }
+      await sleep(NAV_DELAY_MS)
+    }
+    await page.close().catch(() => {})
+  }
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, (_, i) => worker(i)))
+
   await browser.close()
-  console.log(`\nDone. withPhotos=${withPhotos} none=${none} failed=${failed}`)
+  const mins = (Date.now() - started) / 60000
+  console.log(
+    `\nDone in ${mins.toFixed(1)}min. withPhotos=${withPhotos} rejected=${rejected} none=${none} failed=${failed}` +
+      ` (${(processed / mins).toFixed(1)} markets/min)`
+  )
   if (DRY_RUN) console.log('(DRY RUN — nothing written.)')
 }
 
