@@ -14,7 +14,8 @@
     "import:locations": "npx tsx scripts/import/04-create-locations.ts",
     "enrich:outscraper": "npx tsx scripts/enrich/05-enrich-outscraper.ts",
     "enrich:photos": "npx tsx scripts/enrich/06-download-photos.ts",
-    "enrich:google-photos": "npx tsx scripts/enrich/07-enrich-google-photos.ts"
+    "enrich:google-photos": "npx tsx scripts/enrich/07-enrich-google-photos.ts",
+    "enrich:scrape-photos": "node scripts/enrich/08-scrape-google-photos.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -39,6 +40,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
+    "playwright": "^1.61.1",
     "supabase": "^2.72.8",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
