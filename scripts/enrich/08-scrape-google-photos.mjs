@@ -15,9 +15,38 @@
  *   HEADFUL=1 LIMIT=3 node scripts/enrich/08-scrape-google-photos.mjs   # watch it
  */
 import { config } from 'dotenv'
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import { chromium } from 'playwright'
 config({ path: '.env.local' })
+
+// Optional path to record rejected matches (JSONL) for auditing the guard.
+const REJECT_LOG = process.env.REJECT_LOG || 'scripts/.rejects.jsonl'
+
+// Markets we've already tried. Without this, every run re-fetches the same
+// "first N with no image" rows — and since a failed market stays imageless, it
+// stays at the front of the queue forever. Measured: consecutive batches were
+// 99% identical, advancing only ~20 markets per 18-minute run.
+const ATTEMPTED_FILE = process.env.ATTEMPTED_FILE || 'scripts/.attempted.json'
+
+function loadAttempted() {
+  if (process.env.RESET_ATTEMPTED === '1' || !existsSync(ATTEMPTED_FILE)) return new Set()
+  try {
+    return new Set(JSON.parse(readFileSync(ATTEMPTED_FILE, 'utf8')))
+  } catch {
+    return new Set()
+  }
+}
+
+function saveAttempted(set) {
+  // A dry run writes nothing to the DB, so it must not mark markets as done.
+  if (DRY_RUN) return
+  try {
+    writeFileSync(ATTEMPTED_FILE, JSON.stringify([...set]))
+  } catch (e) {
+    console.error('could not persist attempted list:', e.message)
+  }
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -274,18 +303,37 @@ async function run() {
       ` — limit ${LIMIT}, concurrency ${CONCURRENCY}`
   )
 
-  const { data: markets, error } = await supabase
-    .from('markets')
-    .select('id, name, address, city, state, google_place_id')
-    .eq('is_active', true)
-    .is('featured_image', null)
-    .limit(LIMIT)
-  if (error) throw error
-  if (!markets?.length) {
-    console.log('No markets missing images.')
+  const attempted = loadAttempted()
+
+  // Page through all imageless markets, skipping ones we've already tried, so
+  // each run advances into genuinely new territory.
+  const markets = []
+  const PAGE = 1000
+  for (let from = 0; markets.length < LIMIT; from += PAGE) {
+    const { data, error } = await supabase
+      .from('markets')
+      .select('id, name, address, city, state, google_place_id')
+      .eq('is_active', true)
+      .is('featured_image', null)
+      .order('id', { ascending: true })
+      .range(from, from + PAGE - 1)
+    if (error) throw error
+    if (!data?.length) break
+    for (const m of data) {
+      if (!attempted.has(m.id)) markets.push(m)
+      if (markets.length >= LIMIT) break
+    }
+    if (data.length < PAGE) break
+  }
+
+  if (!markets.length) {
+    console.log(
+      `No un-attempted markets left (${attempted.size} already tried).` +
+        ` Use RESET_ATTEMPTED=1 to retry them.`
+    )
     return
   }
-  console.log(`Processing ${markets.length} markets.\n`)
+  console.log(`Processing ${markets.length} markets (${attempted.size} previously tried).\n`)
 
   const browser = await chromium.launch({ headless: !HEADFUL })
   const context = await browser.newContext({
@@ -351,9 +399,15 @@ async function run() {
       while (Date.now() < cooldownUntil && !aborted) await sleep(2000)
       const market = queue.shift()
       if (!market) break
+      attempted.add(market.id)
       try {
         const { photos, matched, score, cityOk } = await scrapeMarket(page, market)
-        if (photos.length && score >= MATCH_THRESHOLD && cityOk) {
+        // A near-perfect name match is strong enough on its own. Our recorded
+        // city is often a neighbouring town, a campus, or has data quirks
+        // ("Hibbing Farmers Market" filed under Chisholm), so demanding a city
+        // hit there throws away good matches.
+        const cityRequired = score < 0.9
+        if (photos.length && score >= MATCH_THRESHOLD && (cityOk || !cityRequired)) {
           noneStreak = 0
           withPhotos++
           if (!DRY_RUN) {
@@ -374,6 +428,21 @@ async function run() {
           // Photos found, but they belong to a different business — discard.
           rejected++
           noneStreak = 0
+          // Log rejections so the guard can be audited/tuned against real data.
+          if (REJECT_LOG) {
+            appendFileSync(
+              REJECT_LOG,
+              JSON.stringify({
+                market: market.name,
+                city: market.city,
+                state: market.state,
+                matched,
+                score: Number(score.toFixed(2)),
+                cityOk,
+                photos: photos.length,
+              }) + '\n'
+            )
+          }
           if (DRY_RUN) {
             console.log(
               `  ✗ REJECT [${score.toFixed(2)}${cityOk ? '' : ' city✗'}] ` +
@@ -390,6 +459,8 @@ async function run() {
         console.error(`  ✗ ${market.name}: ${e.message}`)
       }
       processed++
+      // Persist periodically so an interrupted run doesn't redo its work.
+      if (processed % 50 === 0) saveAttempted(attempted)
       if (processed % 25 === 0) {
         const mins = (Date.now() - started) / 60000
         console.log(
@@ -405,6 +476,7 @@ async function run() {
   await Promise.all(Array.from({ length: CONCURRENCY }, (_, i) => worker(i)))
 
   await browser.close()
+  saveAttempted(attempted)
   const mins = (Date.now() - started) / 60000
   console.log(
     `\nDone in ${mins.toFixed(1)}min. withPhotos=${withPhotos} rejected=${rejected} none=${none} failed=${failed}` +
