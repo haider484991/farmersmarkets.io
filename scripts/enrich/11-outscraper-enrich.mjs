@@ -139,15 +139,24 @@ async function run() {
   console.log(`\nOutscraper enrichment ${DRY_RUN ? '(DRY RUN)' : '(LIVE)'} — mode=${MODE} limit=${LIMIT} chunk=${CHUNK}`)
   console.log(`Estimated cost: ~$${((LIMIT / 1000) * 3).toFixed(2)} at $3/1,000 records\n`)
 
-  let q = supabase
-    .from('markets')
-    .select('id, name, address, city, state, featured_image')
-    .eq('is_active', true)
-    .order('id', { ascending: true })
-  if (MODE === 'missing') q = q.is('featured_image', null)
-  const { data: markets, error } = await q.limit(LIMIT)
-  if (error) throw error
-  if (!markets?.length) {
+  // Supabase caps a single select at 1,000 rows, so page through explicitly —
+  // a plain .limit(3500) silently returns only the first 1,000.
+  const markets = []
+  for (let from = 0; markets.length < LIMIT; from += 1000) {
+    let q = supabase
+      .from('markets')
+      .select('id, name, address, city, state, featured_image')
+      .eq('is_active', true)
+      .order('id', { ascending: true })
+      .range(from, from + 999)
+    if (MODE === 'missing') q = q.is('featured_image', null)
+    const { data, error } = await q
+    if (error) throw error
+    if (!data?.length) break
+    markets.push(...data.slice(0, LIMIT - markets.length))
+    if (data.length < 1000) break
+  }
+  if (!markets.length) {
     console.log('Nothing to enrich.')
     return
   }
