@@ -75,6 +75,10 @@ const SETTLE_MS = process.env.SETTLE_MS ? parseInt(process.env.SETTLE_MS, 10) : 
 const SELECTOR_TIMEOUT = process.env.SELECTOR_TIMEOUT
   ? parseInt(process.env.SELECTOR_TIMEOUT, 10)
   : 6000
+// Page navigation budget. Generous by default because latency to Google from
+// some networks runs several seconds per request; a timeout here wastes the
+// market entirely, so patience is cheaper than a retry.
+const NAV_TIMEOUT = process.env.NAV_TIMEOUT ? parseInt(process.env.NAV_TIMEOUT, 10) : 60000
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -263,7 +267,7 @@ async function scrapeMarket(page, market) {
   const query = `${market.name} ${market.city || ''} ${market.state || ''}`.trim()
   await page.goto('https://www.google.com/maps/search/' + encodeURIComponent(query), {
     waitUntil: 'domcontentloaded',
-    timeout: 30000,
+    timeout: NAV_TIMEOUT,
   })
   await handleConsent(page)
   await page
@@ -456,7 +460,11 @@ async function run() {
         }
       } catch (e) {
         failed++
-        console.error(`  ✗ ${market.name}: ${e.message}`)
+        // A crash/timeout says nothing about whether this market HAS a photo,
+        // so un-mark it and let a later run try again. Only genuine outcomes
+        // (accepted / rejected / no photos) should retire a market.
+        attempted.delete(market.id)
+        console.error(`  ✗ ${market.name}: ${e.message.slice(0, 80)}`)
       }
       processed++
       // Persist periodically so an interrupted run doesn't redo its work.
