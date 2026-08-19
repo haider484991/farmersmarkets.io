@@ -15,30 +15,110 @@ interface MarketPageProps {
   params: Promise<{ slug: string }>
 }
 
+/** Google truncates around here; past it the tail of the title is invisible. */
+const TITLE_BUDGET = 60
+/** Below this, a star rating in the snippet reads as noise rather than proof. */
+const MIN_REVIEWS_TO_ADVERTISE_RATING = 5
+
+/**
+ * Build a market title that fits the SERP. The market name and its city are the
+ * two things a searcher matches against, so they are never sacrificed; the
+ * "Hours & Directions" hook is only appended when it fits inside the budget.
+ * Many market names already carry their city ("Hammond Farmers Market" in
+ * Hammond), so the city is not repeated when it is already present.
+ *
+ * `city` is nullable — 40 active markets are mobile and have no fixed city —
+ * so the location half degrades to the state code alone rather than throwing.
+ */
+function buildMarketTitle(
+  name: string,
+  city: string | null,
+  stateCode: string | null
+): string {
+  const place = [city, stateCode].filter(Boolean).join(', ')
+  const nameIncludesCity = Boolean(city) && name.toLowerCase().includes(city!.toLowerCase())
+  let core: string
+  if (!place) {
+    core = name
+  } else if (nameIncludesCity) {
+    core = stateCode ? `${name}, ${stateCode}` : name
+  } else {
+    core = `${name} — ${place}`
+  }
+  const hook = ': Hours & Directions'
+  return core.length + hook.length <= TITLE_BUDGET ? core + hook : core
+}
+
+/**
+ * Repair descriptions that stringified a missing city. 38 stored
+ * `seo_description` values literally read "in null, NY" because the generator
+ * interpolated a null city; the same hole existed in the code fallback below.
+ */
+function repairNullPlace(text: string): string {
+  return text
+    .replace(/ in null,\s*/gi, ' in ')
+    .replace(/ in null\./gi, '.')
+    .replace(/ in null/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+/**
+ * Remove a "Rated 4.0⭐ by 2+ visitors." style clause from a stored description.
+ * Falls back to a plain factual sentence if stripping leaves too little behind.
+ */
+function stripThinRatingClaim(
+  description: string,
+  name: string,
+  city: string | null,
+  state: string | null
+): string {
+  const stripped = description
+    .replace(/\s*Rated\s+[\d.]+\s*⭐?\s*by\s+\d+\+?\s*visitors?\.?/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  if (stripped.length >= 80) return stripped
+  const place = [city, state].filter(Boolean).join(', ')
+  const where = place ? ` in ${place}` : ''
+  return `${name}${where} — days and hours, what's in season, directions, and accepted payments for this local farmers market.`
+}
+
 export async function generateMetadata({ params }: MarketPageProps): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
 
   const { data: market } = await supabase
     .from('markets')
-    .select('name, city, state, state_code, meta_title, meta_description, seo_title, seo_description, seo_keywords, featured_image')
+    .select('name, city, state, state_code, meta_title, meta_description, seo_title, seo_description, seo_keywords, featured_image, google_rating, google_reviews_count')
     .eq('slug', slug)
     .eq('is_active', true)
-    .single() as { data: Pick<Market, 'name' | 'city' | 'state' | 'state_code' | 'meta_title' | 'meta_description' | 'featured_image'> & { seo_title?: string; seo_description?: string; seo_keywords?: string[] } | null; error: unknown }
+    .single() as { data: Pick<Market, 'name' | 'city' | 'state' | 'state_code' | 'meta_title' | 'meta_description' | 'featured_image' | 'google_rating' | 'google_reviews_count'> & { seo_title?: string; seo_description?: string; seo_keywords?: string[] } | null; error: unknown }
 
   if (!market) return {}
 
-  // Prefer SEO-optimized title/description, fallback to meta, then generate default.
-  // Fallback leads with the hooks people actually search ("hours", "schedule",
-  // "directions") — see GSC query data — to lift CTR on near-miss rankings.
-  const title =
-    market.seo_title ||
-    market.meta_title ||
-    `${market.name}: Hours, Schedule & Directions | ${market.city}, ${market.state_code}`
-  const description =
+  // Titles are built to survive Google's ~60-character truncation rather than
+  // stored whole in the DB. Measured 2026-08-19: every one of the 4,998
+  // DB-supplied seo_titles rendered at 60+ chars once the root layout appended
+  // " | FarmersMarkets.io" (median 86), so the city and state — the part a
+  // "near me" searcher matches on — were being cut off. GSC also recorded zero
+  // branded queries across 9,040 query rows, so that brand suffix buys nothing;
+  // `title.absolute` below opts this route out of the layout template entirely.
+  const title = buildMarketTitle(market.name, market.city, market.state_code)
+
+  // Drop the star rating from the snippet when it rests on almost no reviews.
+  // 587 live descriptions read like "Rated 5.0⭐ by 1+ visitors", which signals
+  // auto-generated thinness in exactly the position a searcher is judging trust.
+  const reviewCount = market.google_reviews_count ?? 0
+  const marketPlace = [market.city, market.state].filter(Boolean).join(', ')
+  const rawDescription =
     market.seo_description ||
     market.meta_description ||
-    `${market.name} in ${market.city}, ${market.state} — see days and hours, what's in season, directions, accepted payments, and reviews for this local farmers market.`
+    `${market.name}${marketPlace ? ` in ${marketPlace}` : ''} — see days and hours, what's in season, directions, accepted payments, and reviews for this local farmers market.`
+  const description = repairNullPlace(
+    reviewCount < MIN_REVIEWS_TO_ADVERTISE_RATING
+      ? stripThinRatingClaim(rawDescription, market.name, market.city, market.state)
+      : rawDescription
+  )
 
   // Use dynamic keywords if available
   const keywords = market.seo_keywords || [
@@ -50,7 +130,8 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
   ]
 
   return {
-    title,
+    // `absolute` bypasses the "%s | FarmersMarkets.io" template in app/layout.tsx.
+    title: { absolute: title },
     description,
     keywords,
     alternates: {
