@@ -5,7 +5,6 @@ import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketDetail } from '@/components/market/MarketDetail'
 import { NearbyMarkets } from '@/components/market/NearbyMarkets'
 import { DisplayAd } from '@/components/ads/DisplayAd'
-import { TopBannerAd } from '@/components/ads/TopBannerAd'
 import { MarketSchema, MarketFAQSchema } from '@/components/seo/MarketSchema'
 import { ReviewList } from '@/components/reviews/ReviewList'
 import { ReviewForm, ReviewLoginPrompt } from '@/components/reviews/ReviewForm'
@@ -269,9 +268,6 @@ export default async function MarketPage({ params }: MarketPageProps) {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* Ad — first thing under the breadcrumbs, where visitors land */}
-        <TopBannerAd className="mt-0" />
-
         <MarketDetail
           market={market}
           userId={user?.id}

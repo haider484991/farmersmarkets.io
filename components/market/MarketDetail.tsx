@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { TopBannerAd } from '@/components/ads/TopBannerAd'
 import Link from 'next/link'
 import {
   MapPin,
@@ -174,6 +175,9 @@ export function MarketDetail({ market, userId, isFavorited = false }: MarketDeta
           )}
         </div>
       </div>
+
+      {/* Ad — after the business title block, before the body content */}
+      <TopBannerAd />
 
       {/* About — unique, data-driven description (always rendered so every
           market page carries distinct body content) */}
