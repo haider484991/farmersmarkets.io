@@ -31,7 +31,7 @@ export function InFeedAd({ className = '' }: { className?: string }) {
 
   return (
     <div
-      className={`flex flex-col justify-center ${className}`.trim()}
+      className={`ad-placement flex flex-col justify-center ${className}`.trim()}
       data-ad-placement={ADS_DEBUG ? 'in-feed' : undefined}
     >
       <p className="mb-1 text-center text-[10px] uppercase tracking-wider text-gray-400">

@@ -47,7 +47,7 @@ export function AdFrame({ slot, label, className = '', children }: AdFrameProps)
 
   return (
     <div
-      className={`my-8 ${className}`.trim()}
+      className={`ad-placement my-8 ${className}`.trim()}
       data-ad-placement={ADS_DEBUG ? label : undefined}
     >
       <p className="mb-1 text-center text-[10px] uppercase tracking-wider text-gray-400">

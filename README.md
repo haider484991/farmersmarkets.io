@@ -88,13 +88,19 @@ Two limits worth knowing:
 
 ### Where the ads are
 
-| Page                   | Placements                                        |
-| ---------------------- | ------------------------------------------------- |
-| Home                   | display, between the two content sections         |
-| `/[state]`             | in-feed in the grid, display above the SEO copy   |
-| `/[state]/[city]`      | in-feed in the grid, display above the SEO copy   |
-| `/market/[slug]`       | display after the listing and before the hub links |
-| `/guides/[slug]`       | in-content, after the first section               |
+| Page                   | Placements                                                            |
+| ---------------------- | --------------------------------------------------------------------- |
+| Home                   | top banner below the hero; display between the content sections       |
+| `/[state]`             | top banner; in-feed after the first grid row; display above SEO copy  |
+| `/[state]/[city]`      | top banner; in-feed after the first grid row; display above SEO copy  |
+| `/market/[slug]`       | top banner; display after the listing and before the hub links        |
+| `/guides/[slug]`       | top banner; in-content after section 1 (+ mid-article on long guides) |
+
+The top banner is `format="horizontal"` with reserved height on purpose: a
+free-format unit up there picks tall rectangles that shove content below the
+fold, and an unreserved one shifts the whole page when it fills — a CLS
+penalty on exactly the pages that rank. Units AdSense declines to fill are
+collapsed entirely by the `data-ad-status="unfilled"` rule in `globals.css`.
 
 `/search` and `/near-me` are deliberately left out: AdSense policy does not
 allow content ads on search results pages. Signed-in pages (dashboard,

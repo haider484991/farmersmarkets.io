@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketList } from '@/components/market/MarketList'
 import { DisplayAd } from '@/components/ads/DisplayAd'
+import { TopBannerAd } from '@/components/ads/TopBannerAd'
 import { STATE_NAMES } from '@/lib/utils'
 import { generateCityIntro } from '@/lib/content'
 import type { Location, Market } from '@/types/database'
@@ -140,6 +141,9 @@ export default async function CityPage({ params }: CityPageProps) {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+        {/* Ad — under the page header, above the market list */}
+        <TopBannerAd className="mt-0" />
+
         {/* Markets List */}
         {markets && markets.length > 0 ? (
           <MarketList markets={markets} showAds />

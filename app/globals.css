@@ -68,3 +68,11 @@ html {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
 }
+
+/* AdSense stamps data-ad-status="unfilled" on an <ins> it declines to fill.
+   Collapse the whole placement then — reserved banner space, the
+   "Advertisement" label and margins included — so no-fill never leaves a
+   labelled blank strip on the page. */
+.ad-placement:has(ins.adsbygoogle[data-ad-status='unfilled']) {
+  display: none;
+}

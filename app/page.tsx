@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { SearchBar } from '@/components/search/SearchBar'
 import { MarketList } from '@/components/market/MarketList'
 import { DisplayAd } from '@/components/ads/DisplayAd'
+import { TopBannerAd } from '@/components/ads/TopBannerAd'
 import { Button } from '@/components/ui/Button'
 import { STATE_NAMES } from '@/lib/utils'
 import type { Market, Location } from '@/types/database'
@@ -84,6 +85,11 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Ad — right below the hero */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <TopBannerAd />
+      </div>
 
       {/* Featured Markets */}
       {featuredMarkets && featuredMarkets.length > 0 && (

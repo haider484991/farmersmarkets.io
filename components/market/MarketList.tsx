@@ -14,7 +14,11 @@ interface MarketListProps {
    * (dashboard, favorites) stay ad-free unless a page opts in.
    */
   showAds?: boolean
-  /** How many cards to show before the in-feed ad. */
+  /**
+   * How many cards to show before the in-feed ad. Defaults to one desktop
+   * grid row, so the ad sits where visitors actually look instead of below
+   * the fold.
+   */
   adAfter?: number
 }
 
@@ -25,7 +29,7 @@ export function MarketList({
   favoritedIds = [],
   emptyMessage = 'No markets found',
   showAds = false,
-  adAfter = 6,
+  adAfter = 3,
 }: MarketListProps) {
   if (markets.length === 0) {
     return (

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketList } from '@/components/market/MarketList'
 import { DisplayAd } from '@/components/ads/DisplayAd'
+import { TopBannerAd } from '@/components/ads/TopBannerAd'
 import { Button } from '@/components/ui/Button'
 import { STATE_NAMES, getStateCode } from '@/lib/utils'
 import { generateStateIntro } from '@/lib/content'
@@ -108,6 +109,9 @@ export default async function StatePage({ params }: StatePageProps) {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+        {/* Ad — under the page header, above the market grid */}
+        <TopBannerAd className="mt-0" />
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar - Cities */}
           <div className="lg:col-span-1">
