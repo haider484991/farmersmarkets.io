@@ -49,9 +49,11 @@ on the host has silently broken AdSense here before.
 ### Geo blocking
 
 Ads serve everywhere **except** the locations listed in `AD_BLOCKED_LOCATIONS`
-in `lib/ads-geo.ts`, currently Dallas, Texas. Edit that array to change it;
-`region` and `country` are both required, since they are what separate Dallas,
-Texas from Dallas, Georgia and Dallas, Oregon.
+in `lib/ads-geo.ts` — currently the whole Dallas–Fort Worth metro (Dallas,
+Fort Worth, Arlington, Plano, Irving and the other metroplex cities listed
+there). Edit `DFW_METRO_CITIES` or the array to change it; `region` and
+`country` are required on every entry, since they are what separate Dallas,
+Texas from Dallas, Georgia — and Arlington, TX from Arlington, VA.
 
 The check deliberately does not happen while rendering the page. Market, state
 and city pages are CDN-cached (`s-maxage`, below), so whichever region

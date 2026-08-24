@@ -18,22 +18,75 @@
 export type AdsGeoDecision = 'allow' | 'block'
 
 /**
+ * Cities of the Dallas–Fort Worth metroplex, as IP geolocation reports them.
+ *
+ * The block covers the whole metro, and geolocation resolves visitors to
+ * their own suburb's name rather than to "Dallas", so each city has to be
+ * listed. Names must be lowercase — they are compared against the
+ * lowercased, decoded x-vercel-ip-city value.
+ */
+const DFW_METRO_CITIES = [
+  'dallas',
+  'fort worth',
+  'arlington',
+  'plano',
+  'irving',
+  'garland',
+  'frisco',
+  'mckinney',
+  'grand prairie',
+  'denton',
+  'mesquite',
+  'carrollton',
+  'richardson',
+  'lewisville',
+  'allen',
+  'flower mound',
+  'north richland hills',
+  'mansfield',
+  'rowlett',
+  'euless',
+  'desoto',
+  'grapevine',
+  'bedford',
+  'cedar hill',
+  'wylie',
+  'keller',
+  'coppell',
+  'hurst',
+  'duncanville',
+  'lancaster',
+  'the colony',
+  'little elm',
+  'farmers branch',
+  'addison',
+  'southlake',
+  'colleyville',
+  'rockwall',
+  'haltom city',
+  'burleson',
+  'prosper',
+  'sachse',
+  'murphy',
+  'university park',
+  'highland park',
+  'balch springs',
+  'watauga',
+]
+
+/**
  * Locations where ads must not serve.
  *
  * `city` is matched case-insensitively; `region` (state/province code) and
  * `country` (ISO code) are both required, since they are what separates
- * Dallas, Texas from Dallas, Georgia and Dallas, Oregon.
- *
- * Note that IP geolocation resolves to the city an address is registered to.
- * Dallas suburbs report their own names — Plano, Irving, Richardson, Garland —
- * so add them here too if the intent is to cover the whole metro rather than
- * the city proper.
+ * Dallas, Texas from Dallas, Georgia and Dallas, Oregon — and Arlington, TX
+ * from Arlington, VA.
  */
 export const AD_BLOCKED_LOCATIONS: ReadonlyArray<{
   city: string
   region: string
   country: string
-}> = [{ city: 'dallas', region: 'TX', country: 'US' }]
+}> = DFW_METRO_CITIES.map((city) => ({ city, region: 'TX', country: 'US' }))
 
 /** Vercel percent-encodes city names, e.g. "San%20Francisco". */
 function normalizeCity(raw: string | null): string {
