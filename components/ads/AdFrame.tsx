@@ -1,4 +1,7 @@
+'use client'
+
 import { ADS_DEBUG } from '@/lib/adsense'
+import { useAdsAllowed } from './useAdsAllowed'
 
 interface AdFrameProps {
   /** The slot ID backing this placement, used to decide what to render. */
@@ -14,11 +17,14 @@ interface AdFrameProps {
  * Shared wrapper for every ad placement.
  *
  * Adds the "Advertisement" label AdSense policy expects above paid content,
- * and decides what an unconfigured placement does: normally nothing at all,
- * but a labelled outline when NEXT_PUBLIC_ADS_DEBUG=1, so a placement that is
- * missing entirely can be told apart from one that simply isn't filling.
+ * hides the placement for visitors whose location is blocked, and decides what
+ * an unconfigured placement does: normally nothing at all, but a labelled
+ * outline when NEXT_PUBLIC_ADS_DEBUG=1, so a placement that is missing
+ * entirely can be told apart from one that simply isn't filling.
  */
 export function AdFrame({ slot, label, className = '', children }: AdFrameProps) {
+  const adsAllowed = useAdsAllowed()
+
   if (!slot) {
     if (!ADS_DEBUG) return null
     return (
@@ -34,6 +40,10 @@ export function AdFrame({ slot, label, className = '', children }: AdFrameProps)
       </div>
     )
   }
+
+  // Blocked location: drop the label and spacing too, not just the ad. AdUnit
+  // independently declines to request an ad, so nothing is loaded either way.
+  if (!adsAllowed) return null
 
   return (
     <div

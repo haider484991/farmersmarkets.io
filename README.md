@@ -22,38 +22,65 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Google AdSense
 
-The AdSense loader script, the `google-adsense-account` meta tag and
-`public/ads.txt` are already wired up for publisher `ca-pub-6873688003145340`.
-What is *not* automatic is the ad units themselves — approval alone does not
-put ads on the page.
+Publisher `ca-pub-6873688003145340`. The loader script, the
+`google-adsense-account` meta tag, `public/ads.txt` and three live ad units are
+all wired up.
 
-### Fastest path: Auto ads
+### Ad units
 
-Auto ads need no slot IDs and no deploy — the loader script in
-`app/layout.tsx` is all they require. Turn them on in **AdSense → Ads → By
-site → farmersmarkets.io → Edit**, and Google places units itself. Placement
-control is poor and they can be intrusive, so treat this as a way to confirm
-serving works, then move to the manual units below.
+Slot IDs live in `SLOT_IDS` in `lib/adsense.ts`:
 
-### Manual units
+| Placement | Slot         | AdSense unit type            |
+| --------- | ------------ | ---------------------------- |
+| `display` | `4993028680` | Display, responsive          |
+| `article` | `6173982485` | In-article, fluid            |
+| `inFeed`  | `3547819147` | In-feed, fluid               |
 
-1. In AdSense go to **Ads → By ad unit** and create three units:
-
-   | Unit type            | Used for                              | Paste into    |
-   | -------------------- | ------------------------------------- | ------------- |
-   | Display ad           | Between page sections                 | `display`     |
-   | In-article ad        | Inside guide/article body copy        | `article`     |
-   | In-feed ad           | Inside the market listing grid        | `inFeed`      |
-
-2. Copy each unit's numeric `data-ad-slot` value out of the snippet Google
-   shows you, and paste it into `SLOT_IDS` in `lib/adsense.ts`.
-3. Deploy. Any placement whose slot is still `''` renders nothing, so you can
-   turn units on one at a time.
+The in-feed unit also needs `ADSENSE_INFEED_LAYOUT_KEY` — AdSense generates the
+layout key alongside the slot ID and the two only work as a pair, so replace
+both together if you rebuild that unit. A placement whose slot is `''` renders
+nothing, so units can be turned off one at a time.
 
 Slot IDs can also come from `NEXT_PUBLIC_ADSENSE_DISPLAY_SLOT`,
 `NEXT_PUBLIC_ADSENSE_ARTICLE_SLOT` and `NEXT_PUBLIC_ADSENSE_INFEED_SLOT`, but
 the constants in `lib/adsense.ts` win. Prefer the constants — a stale env var
 on the host has silently broken AdSense here before.
+
+### Geo blocking
+
+Ads serve everywhere **except** the locations listed in `AD_BLOCKED_LOCATIONS`
+in `lib/ads-geo.ts`, currently Dallas, Texas. Edit that array to change it;
+`region` and `country` are both required, since they are what separate Dallas,
+Texas from Dallas, Georgia and Dallas, Oregon.
+
+The check deliberately does not happen while rendering the page. Market, state
+and city pages are CDN-cached (`s-maxage`, below), so whichever region
+requested a page first would have its decision cached and served to everyone
+else. Instead:
+
+1. `/api/ads/geo` resolves the visitor's location from Vercel's
+   `x-vercel-ip-*` headers and answers `no-store`.
+2. `AdUnit` waits on that answer before calling `adsbygoogle.push()`. A unit
+   that is never pushed makes no ad request and records no impression — this
+   is what actually enforces the block.
+3. `AdFrame` hides the surrounding "Advertisement" label and spacing too.
+
+That route lives three segments deep (`/api/ads/geo`, not `/api/ads-geo`) on
+purpose: the `/:state/:city` rule in `next.config.ts` matches *any* two-segment
+path and would otherwise give it a day-long CDN cache. Regex guards such as
+`/:state((?!api$)[^/]+)` do not help — Next 16's path-to-regexp ignores custom
+param patterns.
+
+Two limits worth knowing:
+
+- **IP geolocation is approximate.** A Dallas visitor on a VPN, or on mobile
+  data routed through another city, will not be caught. Suburbs report their
+  own names — Plano, Irving, Richardson, Garland — so add them to
+  `AD_BLOCKED_LOCATIONS` if you meant the metro rather than the city proper.
+- **Unknown locations are allowed.** Local development and any non-Vercel host
+  send no geo headers, and a failed `/api/ads/geo` request falls back to
+  allowing ads. Blocking on failure would take down every ad on the site
+  rather than just the ones in Dallas.
 
 ### Where the ads are
 
@@ -74,8 +101,8 @@ passes `showAds`.
 
 Set `NEXT_PUBLIC_ADS_DEBUG=1` (never in production) to:
 
-- draw a dashed outline wherever a placement sits, so a missing placement can
-  be told apart from a unit that simply isn't filling, and
+- draw a dashed outline wherever a placement sits if its slot is unset, so a
+  missing placement can be told apart from a unit that simply isn't filling, and
 - add `data-adtest="on"` to every unit, which makes AdSense serve test ads.
   Test ads earn nothing but confirm the whole pipeline works.
 
@@ -87,6 +114,9 @@ Set `NEXT_PUBLIC_ADS_DEBUG=1` (never in production) to:
   blanks to your own IP. Use `data-adtest` above rather than reloading live ads.
 - Ad blockers, Brave shields and DNS-level blockers hide units completely.
   Check in a clean browser profile with no extensions.
+- If you are testing from Dallas, this is working as configured. Check
+  `/api/ads/geo` in the browser — `{"decision":"block"}` means the geo rule
+  fired, not that AdSense is broken.
 
 ## Learn More
 

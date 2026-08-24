@@ -13,8 +13,11 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (public folder)
+     * - api/ads/geo (hit on every page view by the ad units; it resolves the
+     *   visitor's location from request headers and needs no Supabase session,
+     *   so keep the auth round-trip off that path)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/ads/geo|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

@@ -12,7 +12,12 @@ export function InContentAd({ className = '' }: { className?: string }) {
 
   return (
     <AdFrame slot={slot} label="in-content" className={className}>
-      <AdUnit slot={slot} format="fluid" layout="in-article" />
+      <AdUnit
+        slot={slot}
+        format="fluid"
+        layout="in-article"
+        style={{ textAlign: 'center' }}
+      />
     </AdFrame>
   )
 }

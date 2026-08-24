@@ -30,12 +30,21 @@ export const ADSENSE_SCRIPT_SRC = `https://pagead2.googlesyndication.com/pagead/
  */
 const SLOT_IDS = {
   /** In-article unit. Sits inside guide/article body copy. */
-  article: '',
+  article: '6173982485',
   /** Responsive display unit. Sits between page sections. */
-  display: '',
+  display: '4993028680',
   /** In-feed unit. Sits inside a market listing grid. */
-  inFeed: '',
+  inFeed: '3547819147',
 }
+
+/**
+ * Layout key for the in-feed unit (data-ad-layout-key).
+ *
+ * AdSense generates this alongside the slot ID and the two only work as a
+ * pair — it encodes the shape you picked in the in-feed unit builder. Replace
+ * both together if you rebuild that unit.
+ */
+export const ADSENSE_INFEED_LAYOUT_KEY = '-cs-1s+u-m7+z7'
 
 /**
  * Resolved slots. The constants above win; the env vars stay supported so a

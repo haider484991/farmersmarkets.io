@@ -13,7 +13,7 @@ export function DisplayAd({ className = '' }: { className?: string }) {
 
   return (
     <AdFrame slot={slot} label="display" className={className}>
-      <AdUnit slot={slot} format="auto" />
+      <AdUnit slot={slot} format="auto" responsive />
     </AdFrame>
   )
 }

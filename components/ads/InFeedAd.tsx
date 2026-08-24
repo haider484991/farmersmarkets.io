@@ -1,5 +1,8 @@
+'use client'
+
 import { AdUnit } from './AdUnit'
-import { ADSENSE_SLOTS, ADS_DEBUG } from '@/lib/adsense'
+import { ADSENSE_SLOTS, ADSENSE_INFEED_LAYOUT_KEY, ADS_DEBUG } from '@/lib/adsense'
+import { useAdsAllowed } from './useAdsAllowed'
 
 /**
  * An in-feed ad placement sized to sit as one card inside a market grid.
@@ -10,6 +13,7 @@ import { ADSENSE_SLOTS, ADS_DEBUG } from '@/lib/adsense'
  */
 export function InFeedAd({ className = '' }: { className?: string }) {
   const slot = ADSENSE_SLOTS.inFeed
+  const adsAllowed = useAdsAllowed()
 
   if (!slot) {
     if (!ADS_DEBUG) return null
@@ -22,6 +26,9 @@ export function InFeedAd({ className = '' }: { className?: string }) {
     )
   }
 
+  // Blocked location — leave the grid to close up around the gap.
+  if (!adsAllowed) return null
+
   return (
     <div
       className={`flex flex-col justify-center ${className}`.trim()}
@@ -30,7 +37,7 @@ export function InFeedAd({ className = '' }: { className?: string }) {
       <p className="mb-1 text-center text-[10px] uppercase tracking-wider text-gray-400">
         Advertisement
       </p>
-      <AdUnit slot={slot} format="fluid" layout="in-article" />
+      <AdUnit slot={slot} format="fluid" layoutKey={ADSENSE_INFEED_LAYOUT_KEY} />
     </div>
   )
 }

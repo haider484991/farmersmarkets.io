@@ -38,6 +38,12 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 's-maxage=3600, stale-while-revalidate=86400' }
         ]
       },
+      // NOTE: `/:state/:city` matches any two-segment path, /api/markets
+      // included, so that route is CDN-cached for a day as a side effect.
+      // Anything that must not be cached needs a path these rules cannot
+      // reach — /api/ads/geo is three segments for exactly that reason.
+      // Regex guards such as `/:state((?!api$)[^/]+)` do NOT work here; Next
+      // 16's path-to-regexp ignores custom param patterns.
       {
         source: '/:state',
         headers: [

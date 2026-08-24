@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { ADSENSE_CLIENT_ID, ADS_DEBUG } from '@/lib/adsense'
+import { adsAllowed } from './adsAllowed'
 
 declare global {
   interface Window {
@@ -17,7 +18,9 @@ interface AdUnitProps {
   format?: string
   /** AdSense layout hint (data-ad-layout), e.g. "in-article". */
   layout?: string
-  /** Whether the unit should resize responsively. Defaults to true. */
+  /** Layout key (data-ad-layout-key), required by in-feed units. */
+  layoutKey?: string
+  /** Sets data-full-width-responsive. Omitted from the markup when undefined. */
   responsive?: boolean
   /** Extra classes for the wrapping <ins> element. */
   className?: string
@@ -36,7 +39,8 @@ export function AdUnit({
   slot,
   format = 'auto',
   layout,
-  responsive = true,
+  layoutKey,
+  responsive,
   className = '',
   style,
 }: AdUnitProps) {
@@ -47,10 +51,13 @@ export function AdUnit({
     const ins = insRef.current
     if (!ins) return
 
+    let cancelled = false
     let frame = 0
     let attempts = 0
 
     const push = () => {
+      if (cancelled) return
+
       // The loader stamps data-adsbygoogle-status on an element once it claims
       // it. Pushing the same <ins> twice throws "All 'ins' elements in the DOM
       // with class=adsbygoogle already have ads in them", which React's
@@ -72,8 +79,17 @@ export function AdUnit({
       }
     }
 
-    push()
-    return () => cancelAnimationFrame(frame)
+    // Nothing is requested from Google until the visitor's location clears.
+    // This is what actually enforces the block: an <ins> that is never pushed
+    // makes no ad request and records no impression.
+    adsAllowed().then((allowed) => {
+      if (allowed) push()
+    })
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(frame)
+    }
   }, [pathname, slot])
 
   if (!slot) return null
@@ -94,7 +110,10 @@ export function AdUnit({
       data-ad-slot={slot}
       data-ad-format={format}
       {...(layout ? { 'data-ad-layout': layout } : {})}
-      data-full-width-responsive={responsive ? 'true' : 'false'}
+      {...(layoutKey ? { 'data-ad-layout-key': layoutKey } : {})}
+      {...(responsive === undefined
+        ? {}
+        : { 'data-full-width-responsive': responsive ? 'true' : 'false' })}
       data-adtest={ADS_DEBUG ? 'on' : undefined}
     />
   )
