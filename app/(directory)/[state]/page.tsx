@@ -5,6 +5,7 @@ import { MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketList } from '@/components/market/MarketList'
+import { DisplayAd } from '@/components/ads/DisplayAd'
 import { Button } from '@/components/ui/Button'
 import { STATE_NAMES, getStateCode } from '@/lib/utils'
 import { generateStateIntro } from '@/lib/content'
@@ -150,7 +151,7 @@ export default async function StatePage({ params }: StatePageProps) {
             </div>
 
             {markets && markets.length > 0 ? (
-              <MarketList markets={markets} />
+              <MarketList markets={markets} showAds />
             ) : (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
                 <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -168,6 +169,9 @@ export default async function StatePage({ params }: StatePageProps) {
             )}
           </div>
         </div>
+
+        {/* Ad — below the market grid, above the SEO copy */}
+        <DisplayAd />
 
         {/* SEO Content — unique, data-driven per state */}
         <div className="mt-16 bg-white rounded-xl border border-gray-200 p-8">

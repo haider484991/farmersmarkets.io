@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketDetail } from '@/components/market/MarketDetail'
 import { NearbyMarkets } from '@/components/market/NearbyMarkets'
+import { DisplayAd } from '@/components/ads/DisplayAd'
 import { MarketSchema, MarketFAQSchema } from '@/components/seo/MarketSchema'
 import { ReviewList } from '@/components/reviews/ReviewList'
 import { ReviewForm, ReviewLoginPrompt } from '@/components/reviews/ReviewForm'
@@ -273,6 +274,9 @@ export default async function MarketPage({ params }: MarketPageProps) {
           isFavorited={isFavorited}
         />
 
+        {/* Ad — after the market details, before the supporting content */}
+        <DisplayAd />
+
         {/* FAQ — visible content that mirrors the FAQPage structured data */}
         {faqs.length > 0 && (
           <section className="mt-12 bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
@@ -320,6 +324,9 @@ export default async function MarketPage({ params }: MarketPageProps) {
 
         {/* Nearby Markets — real internal links to the closest markets */}
         <NearbyMarkets markets={nearbyMarkets} cityLabel={market.city || undefined} />
+
+        {/* Ad — between the nearby markets and the hub links */}
+        <DisplayAd />
 
         {/* Hub links for crawl depth */}
         <section className="mt-8">

@@ -1,22 +1,18 @@
 import { AdUnit } from './AdUnit'
+import { AdFrame } from './AdFrame'
+import { ADSENSE_SLOTS } from '@/lib/adsense'
 
 /**
- * An in-article ad placement that stays invisible until you activate it.
+ * An in-article ad placement for guide and article body copy.
  *
- * After your AdSense account is approved, create an in-article ad unit and set
- * its slot id in the NEXT_PUBLIC_ADSENSE_ARTICLE_SLOT environment variable.
- * Until then this renders nothing, so pages stay clean during the AdSense review.
+ * Renders nothing until `article` has a slot ID in lib/adsense.ts.
  */
 export function InContentAd({ className = '' }: { className?: string }) {
-  const slot = process.env.NEXT_PUBLIC_ADSENSE_ARTICLE_SLOT
-  if (!slot) return null
+  const slot = ADSENSE_SLOTS.article
 
   return (
-    <div className={`my-8 ${className}`.trim()}>
-      <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-1 text-center">
-        Advertisement
-      </p>
-      <AdUnit slot={slot} format="fluid" />
-    </div>
+    <AdFrame slot={slot} label="in-content" className={className}>
+      <AdUnit slot={slot} format="fluid" layout="in-article" />
+    </AdFrame>
   )
 }
