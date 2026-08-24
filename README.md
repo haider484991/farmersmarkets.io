@@ -65,11 +65,15 @@ else. Instead:
    is what actually enforces the block.
 3. `AdFrame` hides the surrounding "Advertisement" label and spacing too.
 
-That route lives three segments deep (`/api/ads/geo`, not `/api/ads-geo`) on
-purpose: the `/:state/:city` rule in `next.config.ts` matches *any* two-segment
-path and would otherwise give it a day-long CDN cache. Regex guards such as
-`/:state((?!api$)[^/]+)` do not help — Next 16's path-to-regexp ignores custom
-param patterns.
+The `/:state/:city` rule in `next.config.ts` matches *any* two-segment path,
+`/api/*` included, and regex guards on the param do not help — Next 16's
+path-to-regexp ignores custom patterns. Two defenses keep API responses out of
+that cache: the geo route lives three segments deep (`/api/ads/geo`), and an
+`/api/:path*` rule placed *after* the directory rules overrides them with
+`no-store` (header rules run in order; last value per key wins). `/api/markets`
+then opts back in to `s-maxage=3600` deliberately — it serves the same public
+directory data as the market pages, and caching it keeps `/search` and
+`/near-me` fast.
 
 Two limits worth knowing:
 

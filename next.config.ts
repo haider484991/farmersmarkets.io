@@ -38,12 +38,12 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 's-maxage=3600, stale-while-revalidate=86400' }
         ]
       },
-      // NOTE: `/:state/:city` matches any two-segment path, /api/markets
-      // included, so that route is CDN-cached for a day as a side effect.
-      // Anything that must not be cached needs a path these rules cannot
-      // reach — /api/ads/geo is three segments for exactly that reason.
-      // Regex guards such as `/:state((?!api$)[^/]+)` do NOT work here; Next
-      // 16's path-to-regexp ignores custom param patterns.
+      // NOTE: `/:state` and `/:state/:city` match ANY one- and two-segment
+      // path — /api/markets included — and path-to-regexp here ignores custom
+      // param patterns (`/:state((?!api$)[^/]+)` still matches /api/*), so
+      // the sources themselves cannot exclude /api. Instead the /api rules
+      // BELOW these override them: rules run in order and the last value for
+      // a header key wins. Keep API rules after the directory rules.
       {
         source: '/:state',
         headers: [
@@ -54,6 +54,27 @@ const nextConfig: NextConfig = {
         source: '/:state/:city',
         headers: [
           { key: 'Cache-Control', value: 's-maxage=86400, stale-while-revalidate=604800' }
+        ]
+      },
+      // Safe default for every API route: never CDN-cached. Without this,
+      // any new two-segment /api route silently inherits the day-long
+      // directory cache above.
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, max-age=0' }
+        ]
+      },
+      // Search API, deliberately cacheable: it serves the same public
+      // directory data as /market/:slug, so it gets the same freshness
+      // window. The CDN caches per full URL, so each query-string
+      // combination is its own entry. Keeps /search and /near-me fast
+      // without the accidental day-long staleness this route used to
+      // inherit from `/:state/:city`.
+      {
+        source: '/api/markets',
+        headers: [
+          { key: 'Cache-Control', value: 's-maxage=3600, stale-while-revalidate=86400' }
         ]
       },
     ];
