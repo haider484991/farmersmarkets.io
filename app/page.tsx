@@ -202,6 +202,11 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Ad — second unit, deeper down the longest landing page */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <DisplayAd />
+      </div>
+
       {/* CTA Section */}
       <section className="py-16 bg-green-600">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">

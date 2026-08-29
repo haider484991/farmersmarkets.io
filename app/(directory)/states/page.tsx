@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
+import { TopBannerAd } from '@/components/ads/TopBannerAd'
+import { DisplayAd } from '@/components/ads/DisplayAd'
 import { STATE_NAMES, getStateSlug } from '@/lib/utils'
 import type { Location } from '@/types/database'
 
@@ -65,6 +67,9 @@ export default async function StatesPage() {
 
       {/* Content */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+        {/* Ad — under the page header, above the region lists */}
+        <TopBannerAd className="mt-0" />
+
         {Object.entries(regions).map(([region, stateCodes]) => {
           const regionStates = stateCodes
             .map((code) => statesByCode.get(code))
@@ -107,6 +112,9 @@ export default async function StatesPage() {
       {/* SEO Content */}
       <div className="bg-white border-t border-gray-200">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+          {/* Ad — above the closing SEO copy */}
+          <DisplayAd className="mt-0" />
+
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Find Farmers Markets in Your State
           </h2>

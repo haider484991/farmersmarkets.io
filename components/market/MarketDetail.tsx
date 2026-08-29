@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { TopBannerAd } from '@/components/ads/TopBannerAd'
+import { DisplayAd } from '@/components/ads/DisplayAd'
 import Link from 'next/link'
 import {
   MapPin,
@@ -355,6 +356,9 @@ export function MarketDetail({ market, userId, isFavorited = false }: MarketDeta
           </div>
         )}
       </div>
+
+      {/* Ad — mid-page, between the market's details and the map */}
+      <DisplayAd />
 
       {/* Map */}
       {market.latitude && market.longitude && (

@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Clock } from 'lucide-react'
 import { getAllGuides } from '@/lib/guides'
+import { TopBannerAd } from '@/components/ads/TopBannerAd'
+import { DisplayAd } from '@/components/ads/DisplayAd'
 
 export const metadata: Metadata = {
   title: 'Farmers Market Guides & Resources',
@@ -37,6 +39,9 @@ export default function GuidesIndexPage() {
       </div>
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
+        {/* Ad — under the page header, above the guide cards */}
+        <TopBannerAd className="mt-0" />
+
         {/* Featured guide */}
         {featured && (
           <Link
@@ -89,6 +94,9 @@ export default function GuidesIndexPage() {
             </Link>
           ))}
         </div>
+
+        {/* Ad — below the guide cards */}
+        <DisplayAd />
       </div>
     </div>
   )
