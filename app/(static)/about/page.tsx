@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, Database, Star, Users } from 'lucide-react'
+import { TopBannerAd } from '@/components/ads/TopBannerAd'
+import { DisplayAd } from '@/components/ads/DisplayAd'
 
 export const metadata: Metadata = {
   title: 'About Us',
@@ -25,6 +27,9 @@ export default function AboutPage() {
 
       {/* Content */}
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+        {/* Ad — under the page header, above the body copy */}
+        <TopBannerAd className="mt-0" />
+
         {/* Mission */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Our Mission</h2>
@@ -140,6 +145,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Own a Farmers Market?
           </h2>
+          <DisplayAd />
           <p className="text-gray-600 mb-6 max-w-lg mx-auto">
             Claim your listing to update your market information, respond to
             reviews, and connect with more customers.

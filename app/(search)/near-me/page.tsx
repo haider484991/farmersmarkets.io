@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { MapPin, Loader2 } from 'lucide-react'
 import { MarketList, MarketListSkeleton } from '@/components/market/MarketList'
 import { Button } from '@/components/ui/Button'
+import { DisplayAd } from '@/components/ads/DisplayAd'
 import type { Market, PaginatedResponse } from '@/types/database'
 import { calculateDistance, formatDistance } from '@/lib/utils'
 
@@ -211,6 +212,12 @@ export default function NearMePage() {
               <MarketListSkeleton count={6} />
             ) : markets.length > 0 ? (
               <div className="space-y-6">
+                {/* Ad — deliberately inside this branch only. The
+                    idle/requesting, error and no-results states are screens
+                    with no real content of their own, and AdSense treats ads
+                    on those as a policy violation. */}
+                <DisplayAd className="mt-0" />
+
                 {/* Market Cards with Distance */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {markets.map((market) => (
