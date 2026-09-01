@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getGuideSlugs } from '@/lib/guides'
+import { TITLE_TEST_ENABLED, TITLE_TEST_STARTED, titleTestGroup } from '@/lib/titleTest'
 import type { Location, Market } from '@/types/database'
 
 /**
@@ -168,12 +169,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           .range(from, to)
     )
 
-    const marketPages: MetadataRoute.Sitemap = markets.map((market) => ({
-      url: `${baseUrl}/market/${market.slug}`,
-      lastModified: market.updated_at ? new Date(market.updated_at) : new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    }))
+    // Pages in the variant arm of the title test (lib/titleTest.ts) changed their
+    // title and description on TITLE_TEST_STARTED, so that is their honest
+    // lastmod when it is newer than the row's own timestamp. Control pages did
+    // not change and keep updated_at, so a recrawl is asked for only where the
+    // HTML actually differs.
+    const testStart = new Date(TITLE_TEST_STARTED)
+    const marketPages: MetadataRoute.Sitemap = markets.map((market) => {
+      const updated = market.updated_at ? new Date(market.updated_at) : new Date()
+      const changedByTest = TITLE_TEST_ENABLED && titleTestGroup(market.slug) === 'variant'
+      return {
+        url: `${baseUrl}/market/${market.slug}`,
+        lastModified: changedByTest && testStart > updated ? testStart : updated,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }
+    })
 
     return [...staticPages, ...guidePages, ...statePages, ...cityPages, ...marketPages]
   } catch (error) {
