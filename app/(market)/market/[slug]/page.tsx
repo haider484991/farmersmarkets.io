@@ -10,7 +10,14 @@ import { ReviewList } from '@/components/reviews/ReviewList'
 import { ReviewForm, ReviewLoginPrompt } from '@/components/reviews/ReviewForm'
 import { getStateSlug, calculateDistance } from '@/lib/utils'
 import { buildMarketFaqs } from '@/lib/content'
-import type { Market, Review } from '@/types/database'
+import type { Market, MarketProducts, MarketSchedule, PaymentMethods, Review } from '@/types/database'
+import {
+  TITLE_TEST_ENABLED,
+  buildVariantDescription,
+  buildVariantTitle,
+  summarizeSchedule,
+  titleTestGroup,
+} from '@/lib/titleTest'
 
 interface MarketPageProps {
   params: Promise<{ slug: string }>
@@ -31,21 +38,20 @@ const MIN_REVIEWS_TO_ADVERTISE_RATING = 5
  * `city` is nullable — 40 active markets are mobile and have no fixed city —
  * so the location half degrades to the state code alone rather than throwing.
  */
+function marketTitleCore(name: string, city: string | null, stateCode: string | null): string {
+  const place = [city, stateCode].filter(Boolean).join(', ')
+  const nameIncludesCity = Boolean(city) && name.toLowerCase().includes(city!.toLowerCase())
+  if (!place) return name
+  if (nameIncludesCity) return stateCode ? `${name}, ${stateCode}` : name
+  return `${name} — ${place}`
+}
+
 function buildMarketTitle(
   name: string,
   city: string | null,
   stateCode: string | null
 ): string {
-  const place = [city, stateCode].filter(Boolean).join(', ')
-  const nameIncludesCity = Boolean(city) && name.toLowerCase().includes(city!.toLowerCase())
-  let core: string
-  if (!place) {
-    core = name
-  } else if (nameIncludesCity) {
-    core = stateCode ? `${name}, ${stateCode}` : name
-  } else {
-    core = `${name} — ${place}`
-  }
+  const core = marketTitleCore(name, city, stateCode)
   const hook = ': Hours & Directions'
   return core.length + hook.length <= TITLE_BUDGET ? core + hook : core
 }
@@ -90,10 +96,10 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
 
   const { data: market } = await supabase
     .from('markets')
-    .select('name, city, state, state_code, meta_title, meta_description, seo_title, seo_description, seo_keywords, featured_image, google_rating, google_reviews_count')
+    .select('name, city, state, state_code, meta_title, meta_description, seo_title, seo_description, seo_keywords, featured_image, google_rating, google_reviews_count, schedule, address, products, payment_methods')
     .eq('slug', slug)
     .eq('is_active', true)
-    .single() as { data: Pick<Market, 'name' | 'city' | 'state' | 'state_code' | 'meta_title' | 'meta_description' | 'featured_image' | 'google_rating' | 'google_reviews_count'> & { seo_title?: string; seo_description?: string; seo_keywords?: string[] } | null; error: unknown }
+    .single() as { data: Pick<Market, 'name' | 'city' | 'state' | 'state_code' | 'meta_title' | 'meta_description' | 'featured_image' | 'google_rating' | 'google_reviews_count' | 'schedule' | 'address' | 'products' | 'payment_methods'> & { seo_title?: string; seo_description?: string; seo_keywords?: string[] } | null; error: unknown }
 
   if (!market) return {}
 
@@ -104,7 +110,7 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
   // "near me" searcher matches on — were being cut off. GSC also recorded zero
   // branded queries across 9,040 query rows, so that brand suffix buys nothing;
   // `title.absolute` below opts this route out of the layout template entirely.
-  const title = buildMarketTitle(market.name, market.city, market.state_code)
+  const controlTitle = buildMarketTitle(market.name, market.city, market.state_code)
 
   // Drop the star rating from the snippet when it rests on almost no reviews.
   // 587 live descriptions read like "Rated 5.0⭐ by 1+ visitors", which signals
@@ -115,11 +121,39 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
     market.seo_description ||
     market.meta_description ||
     `${market.name}${marketPlace ? ` in ${marketPlace}` : ''} — see days and hours, what's in season, directions, accepted payments, and reviews for this local farmers market.`
-  const description = repairNullPlace(
+  const controlDescription = repairNullPlace(
     reviewCount < MIN_REVIEWS_TO_ADVERTISE_RATING
       ? stripThinRatingClaim(rawDescription, market.name, market.city, market.state)
       : rawDescription
   )
+
+  // Title/description test (lib/titleTest.ts, started 2026-09-02): half of the
+  // market pages, chosen by a stable hash of the slug, state the actual days and
+  // hours in place of the generic hook and lead the description with facts.
+  // scripts/gsc-title-test.mjs reads the result out of Search Console.
+  const group = TITLE_TEST_ENABLED ? titleTestGroup(slug) : 'control'
+  const schedule = summarizeSchedule(market.schedule as MarketSchedule | null)
+  const title =
+    group === 'variant'
+      ? buildVariantTitle(marketTitleCore(market.name, market.city, market.state_code), schedule, controlTitle)
+      : controlTitle
+  const description =
+    group === 'variant'
+      ? buildVariantDescription(
+          {
+            name: market.name,
+            city: market.city,
+            stateCode: market.state_code,
+            address: market.address,
+            summary: schedule,
+            products: market.products as MarketProducts | null,
+            payments: market.payment_methods as PaymentMethods | null,
+            rating: market.google_rating,
+            reviews: market.google_reviews_count,
+          },
+          controlDescription
+        )
+      : controlDescription
 
   // Use dynamic keywords if available
   const keywords = market.seo_keywords || [
@@ -135,6 +169,8 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
     title: { absolute: title },
     description,
     keywords,
+    // Which arm of the title test this page is in; lets a live fetch confirm the split.
+    other: { 'fm-title-test': group },
     alternates: {
       canonical: `/market/${slug}`,
     },
