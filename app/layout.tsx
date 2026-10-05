@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
-import { ADSENSE_CLIENT_ID, ADSENSE_SCRIPT_SRC } from "@/lib/adsense";
+import { ADSENSE_CLIENT_ID } from "@/lib/adsense";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -134,14 +134,6 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        {/* Google AdSense loader — required for ad serving and AdSense site review.
-            Plain <script> so it is server-rendered into the raw <head> exactly as
-            AdSense's crawler expects. */}
-        <script
-          async
-          src={ADSENSE_SCRIPT_SRC}
-          crossOrigin="anonymous"
         />
         {/* Ahrefs Web Analytics */}
         <script

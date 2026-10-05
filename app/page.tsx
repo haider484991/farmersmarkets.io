@@ -4,7 +4,6 @@ import { MapPin, Search, Star, Clock, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { SearchBar } from '@/components/search/SearchBar'
 import { MarketList } from '@/components/market/MarketList'
-import { DisplayAd } from '@/components/ads/DisplayAd'
 import { Button } from '@/components/ui/Button'
 import { STATE_NAMES } from '@/lib/utils'
 import type { Market, Location } from '@/types/database'
@@ -107,11 +106,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Ad — between the two main content sections, below the fold */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <DisplayAd />
-      </div>
-
       {/* Browse by State */}
       <section className="py-16 bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -201,11 +195,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Ad — second unit, deeper down the longest landing page */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <DisplayAd />
-      </div>
 
       {/* CTA Section */}
       <section className="py-16 bg-green-600">

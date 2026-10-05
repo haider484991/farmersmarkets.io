@@ -1,8 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, Lightbulb, Clock, CalendarDays } from 'lucide-react'
 import type { Guide } from '@/lib/guides'
-import { InContentAd } from '@/components/ads/InContentAd'
-import { TopBannerAd } from '@/components/ads/TopBannerAd'
 
 function anchorId(text: string, fallback: string): string {
   const base = text
@@ -23,12 +21,6 @@ interface GuideArticleProps {
 }
 
 export function GuideArticle({ guide, related }: GuideArticleProps) {
-  // In-content ads: one right after the first section, while the reader is
-  // still near the top, and a second at the midpoint of longer guides. The
-  // midpoint index is always > 0 when it exists, so the two never collide.
-  const adAfter = 0
-  const adMid = guide.sections.length >= 5 ? Math.floor(guide.sections.length / 2) : -1
-
   return (
     <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}
@@ -51,9 +43,6 @@ export function GuideArticle({ guide, related }: GuideArticleProps) {
           </span>
         </div>
       </header>
-
-      {/* Ad — between the title block and the article body */}
-      <TopBannerAd />
 
       {/* Intro */}
       <div className="prose prose-lg prose-gray max-w-none">
@@ -136,8 +125,6 @@ export function GuideArticle({ guide, related }: GuideArticleProps) {
                 </div>
               )}
             </section>
-
-            {(si === adAfter || si === adMid) && <InContentAd />}
           </div>
         )
       })}

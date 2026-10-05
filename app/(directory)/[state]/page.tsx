@@ -5,8 +5,6 @@ import { MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Breadcrumbs, BreadcrumbSchema } from '@/components/layout/Breadcrumbs'
 import { MarketList } from '@/components/market/MarketList'
-import { DisplayAd } from '@/components/ads/DisplayAd'
-import { TopBannerAd } from '@/components/ads/TopBannerAd'
 import { Button } from '@/components/ui/Button'
 import { STATE_NAMES, getStateCode } from '@/lib/utils'
 import { generateStateIntro } from '@/lib/content'
@@ -109,9 +107,6 @@ export default async function StatePage({ params }: StatePageProps) {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Ad — under the page header, above the market grid */}
-        <TopBannerAd className="mt-0" />
-
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar - Cities */}
           <div className="lg:col-span-1">
@@ -155,7 +150,7 @@ export default async function StatePage({ params }: StatePageProps) {
             </div>
 
             {markets && markets.length > 0 ? (
-              <MarketList markets={markets} showAds />
+              <MarketList markets={markets} />
             ) : (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
                 <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -173,9 +168,6 @@ export default async function StatePage({ params }: StatePageProps) {
             )}
           </div>
         </div>
-
-        {/* Ad — below the market grid, above the SEO copy */}
-        <DisplayAd />
 
         {/* SEO Content — unique, data-driven per state */}
         <div className="mt-16 bg-white rounded-xl border border-gray-200 p-8">

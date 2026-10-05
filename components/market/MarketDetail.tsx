@@ -1,6 +1,4 @@
 import Image from 'next/image'
-import { TopBannerAd } from '@/components/ads/TopBannerAd'
-import { DisplayAd } from '@/components/ads/DisplayAd'
 import Link from 'next/link'
 import {
   MapPin,
@@ -176,9 +174,6 @@ export function MarketDetail({ market, userId, isFavorited = false }: MarketDeta
           )}
         </div>
       </div>
-
-      {/* Ad — after the business title block, before the body content */}
-      <TopBannerAd />
 
       {/* About — unique, data-driven description (always rendered so every
           market page carries distinct body content) */}
@@ -356,9 +351,6 @@ export function MarketDetail({ market, userId, isFavorited = false }: MarketDeta
           </div>
         )}
       </div>
-
-      {/* Ad — mid-page, between the market's details and the map */}
-      <DisplayAd />
 
       {/* Map */}
       {market.latitude && market.longitude && (

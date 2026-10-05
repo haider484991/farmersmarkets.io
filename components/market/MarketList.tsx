@@ -1,7 +1,5 @@
-import { Fragment } from 'react'
 import type { Market } from '@/types/database'
 import { MarketCard, MarketCardSkeleton } from './MarketCard'
-import { InFeedAd } from '@/components/ads/InFeedAd'
 
 interface MarketListProps {
   markets: Market[]
@@ -9,17 +7,6 @@ interface MarketListProps {
   userId?: string | null
   favoritedIds?: string[]
   emptyMessage?: string
-  /**
-   * Drop an in-feed ad unit into the grid. Off by default so signed-in areas
-   * (dashboard, favorites) stay ad-free unless a page opts in.
-   */
-  showAds?: boolean
-  /**
-   * How many cards to show before the in-feed ad. Defaults to one desktop
-   * grid row, so the ad sits where visitors actually look instead of below
-   * the fold.
-   */
-  adAfter?: number
 }
 
 export function MarketList({
@@ -28,8 +15,6 @@ export function MarketList({
   userId,
   favoritedIds = [],
   emptyMessage = 'No markets found',
-  showAds = false,
-  adAfter = 3,
 }: MarketListProps) {
   if (markets.length === 0) {
     return (
@@ -39,22 +24,16 @@ export function MarketList({
     )
   }
 
-  // Only worth an in-feed unit when there are enough cards for it to land
-  // mid-grid rather than dangling off the end of a short list.
-  const showInFeedAd = showAds && markets.length > adAfter
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {markets.map((market, i) => (
-        <Fragment key={market.id}>
-          {showInFeedAd && i === adAfter && <InFeedAd />}
-          <MarketCard
-            market={market}
-            showFavoriteButton={showFavoriteButton}
-            userId={userId}
-            isFavorited={favoritedIds.includes(market.id)}
-          />
-        </Fragment>
+      {markets.map((market) => (
+        <MarketCard
+          key={market.id}
+          market={market}
+          showFavoriteButton={showFavoriteButton}
+          userId={userId}
+          isFavorited={favoritedIds.includes(market.id)}
+        />
       ))}
     </div>
   )
