@@ -5,7 +5,6 @@ import { Analytics } from "@vercel/analytics/next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
-import { ADSENSE_CLIENT_ID } from "@/lib/adsense";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -74,10 +73,6 @@ export const metadata: Metadata = {
   category: "Food & Drink",
   verification: {
     google: "Md58xNR6UmA8giVrK2VU9M86wwq18i6C_CI48I8zp98",
-  },
-  other: {
-    // Google AdSense site verification meta tag.
-    "google-adsense-account": ADSENSE_CLIENT_ID,
   },
 };
 
