@@ -49,6 +49,7 @@ export const storingProduceGuide: Guide = {
     },
     {
       heading: 'What belongs in the fridge',
+      gear: ['produceSaver'],
       body: [
         'Most vegetables and many fruits last longest in the cool, humid environment of the refrigerator, ideally in the crisper drawer.',
       ],
@@ -64,12 +65,14 @@ export const storingProduceGuide: Guide = {
     },
     {
       heading: 'How to store fresh herbs',
+      gear: ['herbKeeper'],
       body: [
         'Herbs are among the first things to wilt, but a couple of tricks keep them lively. Treat leafy, soft herbs like a bouquet of flowers: trim the stems and stand them in a jar with an inch of water. Basil prefers to stay on the counter this way, while parsley, cilantro, and mint do well in a jar loosely covered with a bag in the fridge. Woody herbs like rosemary and thyme keep well wrapped in a slightly damp towel in the fridge.',
       ],
     },
     {
       heading: 'Freezing and preserving the extras',
+      gear: ['vacuumSealer'],
       body: [
         'When you buy in bulk during peak season — a flat of berries in June, a box of tomatoes in August — preserving lets you enjoy the market long after the crop is gone. Most berries freeze beautifully: spread them on a tray to freeze individually, then transfer to a bag so they do not clump. Tomatoes can be roasted and frozen or cooked down into sauce. Many vegetables freeze well after a quick blanch in boiling water. Herbs can be chopped and frozen in oil in ice-cube trays.',
       ],

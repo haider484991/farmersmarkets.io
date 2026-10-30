@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = 'June 7, 2026'
+const LAST_UPDATED = 'October 30, 2026'
 
 export default function TermsOfServicePage() {
   return (
@@ -111,7 +111,10 @@ export default function TermsOfServicePage() {
             <p>
               The Service may contain links to third-party websites and may
               display third-party advertising, including ads served by Google
-              AdSense. We are not responsible for the content, products, or
+              AdSense and Amazon affiliate links. As an Amazon Associate,
+              FarmersMarkets.io earns from qualifying purchases. Products sold
+              through those links are sold by Amazon or its sellers, not by us
+              or by the markets we list. We are not responsible for the content, products, or
               practices of any third-party sites or advertisers. Your
               interactions with third parties are solely between you and the
               third party. See our{' '}

@@ -16,7 +16,9 @@ import {
 import type { Market, MarketSchedule, MarketProducts, PaymentMethods, SeoFeature } from '@/types/database'
 import { formatPhone, formatDay, DAYS_OF_WEEK, type DayOfWeek } from '@/lib/utils'
 import { generateMarketDescription } from '@/lib/content'
+import { gearForMarket } from '@/lib/gear'
 import { Button } from '@/components/ui/Button'
+import { GearPicks } from '@/components/gear/GearPicks'
 import { FavoriteButton } from './FavoriteButton'
 import { SingleMarketMap } from '@/components/map/MapView'
 
@@ -24,6 +26,19 @@ interface MarketDetailProps {
   market: Market
   userId?: string | null
   isFavorited?: boolean
+}
+
+/** Reminders that follow from how the market takes payment. */
+function visitNotes(payments: PaymentMethods | null): string[] {
+  const p = payments ?? {}
+  const listed = Object.values(p).some(Boolean)
+  const notes: string[] = []
+  if (!listed || p.cash) {
+    notes.push('Cash in small bills. Ones and fives keep lines moving, and change for a $20 runs short early in the day.')
+  }
+  if (p.snap) notes.push('Your EBT card. This market accepts SNAP.')
+  if (p.wic || p.sfmnp) notes.push('WIC or senior farmers market coupons, which this market takes.')
+  return notes
 }
 
 export function MarketDetail({ market, userId, isFavorited = false }: MarketDetailProps) {
@@ -351,6 +366,15 @@ export function MarketDetail({ market, userId, isFavorited = false }: MarketDeta
           </div>
         )}
       </div>
+
+      {/* What to bring — reminders from the market's own payment data, plus
+          Amazon picks chosen from what it sells (lib/gear.ts) */}
+      <GearPicks
+        heading={`What to bring to ${market.name}`}
+        notes={visitNotes(paymentMethods)}
+        items={gearForMarket(products, market.name)}
+        placement="market"
+      />
 
       {/* Map */}
       {market.latitude && market.longitude && (

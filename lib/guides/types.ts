@@ -2,6 +2,8 @@
 // (not generated from market data) — this is the editorial layer that gives the
 // site topical depth for readers and search engines alike.
 
+import type { GearKey } from '@/lib/gear'
+
 export interface GuideList {
   title?: string
   ordered?: boolean
@@ -26,6 +28,8 @@ export interface GuideSection {
   table?: GuideTable
   /** An optional highlighted callout / pro-tip. */
   tip?: string
+  /** Optional Amazon picks (lib/gear.ts) shown at the end of the section. */
+  gear?: GearKey[]
 }
 
 export interface GuideFaq {

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, Lightbulb, Clock, CalendarDays } from 'lucide-react'
 import type { Guide } from '@/lib/guides'
+import { GearPicks } from '@/components/gear/GearPicks'
 
 function anchorId(text: string, fallback: string): string {
   const base = text
@@ -123,6 +124,16 @@ export function GuideArticle({ guide, related }: GuideArticleProps) {
                   <Lightbulb className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-green-900 m-0">{section.tip}</p>
                 </div>
+              )}
+
+              {section.gear && section.gear.length > 0 && (
+                <GearPicks
+                  heading="Gear that helps"
+                  items={section.gear}
+                  placement={`guide:${guide.slug}`}
+                  level="h3"
+                  className="mt-5"
+                />
               )}
             </section>
           </div>

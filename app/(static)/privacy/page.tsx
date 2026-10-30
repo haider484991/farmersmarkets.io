@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = 'June 7, 2026'
+const LAST_UPDATED = 'October 30, 2026'
 
 export default function PrivacyPolicyPage() {
   return (
@@ -169,6 +169,31 @@ export default function PrivacyPolicyPage() {
                 accordance with Google&rsquo;s EU user consent policy.
               </p>
             </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Amazon Associates
+            </h2>
+            <p>
+              FarmersMarkets.io is a participant in the Amazon Services LLC
+              Associates Program, an affiliate advertising program designed to
+              provide a means for sites to earn advertising fees by advertising
+              and linking to Amazon.com. As an Amazon Associate, we earn from
+              qualifying purchases. When you follow one of our Amazon links,
+              Amazon may set cookies to credit the purchase to us; those cookies
+              are governed by{' '}
+              <a
+                href="https://www.amazon.com/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-600 hover:text-green-700"
+              >
+                Amazon&rsquo;s Privacy Notice
+              </a>
+              . We record that a link was clicked, but we never see what you buy
+              or any of your Amazon account details.
+            </p>
           </section>
 
           <section>

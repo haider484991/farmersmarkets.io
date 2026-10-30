@@ -17,6 +17,7 @@ export const beginnersGuide: Guide = {
   sections: [
     {
       heading: 'What to bring',
+      gear: ['produceBags', 'coolerBag', 'marketTote'],
       body: [
         'A little preparation makes the trip smoother. You do not need much, but a few items will save you hassle.',
       ],

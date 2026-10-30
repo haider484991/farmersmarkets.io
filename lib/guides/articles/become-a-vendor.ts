@@ -70,6 +70,7 @@ export const becomeAVendorGuide: Guide = {
     },
     {
       heading: 'Step 6: Budget for the costs',
+      gear: ['canopy', 'canopyWeights', 'foldingTable', 'cashBox', 'cardReader'],
       body: [
         'Selling at a market has real, ongoing costs. Plan for them so your pricing actually turns a profit.',
       ],
