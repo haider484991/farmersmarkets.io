@@ -1,4 +1,5 @@
-import { Check, ShoppingBasket } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, Check, ShoppingBasket } from 'lucide-react'
 import { GEAR, amazonUrl, type GearKey } from '@/lib/gear'
 import { AmazonLink } from './AmazonLink'
 
@@ -12,6 +13,8 @@ interface GearPicksProps {
   placement: string
   /** 'h3' when the block sits inside a guide section that already has an h2. */
   level?: 'h2' | 'h3'
+  /** An optional internal link under the picks, e.g. to a buying guide. */
+  more?: { href: string; label: string }
   className?: string
 }
 
@@ -26,6 +29,7 @@ export function GearPicks({
   items,
   placement,
   level = 'h2',
+  more,
   className = '',
 }: GearPicksProps) {
   const Heading = level
@@ -67,6 +71,16 @@ export function GearPicks({
           )
         })}
       </ul>
+
+      {more && (
+        <Link
+          href={more.href}
+          className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700"
+        >
+          {more.label}
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      )}
 
       <p className="mt-3 text-xs text-gray-500">
         As an Amazon Associate, FarmersMarkets.io earns from qualifying purchases. Picks are ours;

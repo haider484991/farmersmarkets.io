@@ -121,7 +121,7 @@ export const becomeAVendorGuide: Guide = {
         'A producer-only market requires that vendors grow or make what they sell, rather than reselling wholesale goods. These markets appeal to shoppers who want to buy directly from the farmer or maker, but they limit what you are allowed to offer.',
     },
   ],
-  related: ['why-shop-local', 'farmers-market-season', 'beginners-guide'],
+  related: ['farmers-market-tent-and-display', 'why-shop-local', 'farmers-market-season'],
   cta: {
     heading: 'Research markets in your area',
     text: 'Browse farmers markets by state to scout locations, days, and the vendor mix before you apply.',

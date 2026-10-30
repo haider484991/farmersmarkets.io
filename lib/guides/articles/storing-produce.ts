@@ -113,7 +113,7 @@ export const storingProduceGuide: Guide = {
         'Ethylene-producing items — apples, bananas, tomatoes, and stone fruit — speed up ripening in nearby produce. Keep them away from ethylene-sensitive items like leafy greens and broccoli. Also store potatoes and onions separately from each other.',
     },
   ],
-  related: ['seasonal-produce-guide', 'beginners-guide', 'why-shop-local'],
+  related: ['how-to-store-fresh-herbs', 'seasonal-produce-guide', 'beginners-guide'],
   cta: {
     heading: 'Stock up at a market near you',
     text: 'Find local markets, check what’s in season, and put these storage tips to work on your next haul.',

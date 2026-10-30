@@ -7,6 +7,9 @@ import { snapEbtGuide } from './articles/snap-ebt-farmers-markets'
 import { wicFmnpGuide } from './articles/wic-fmnp'
 import { whyShopLocalGuide } from './articles/why-shop-local'
 import { becomeAVendorGuide } from './articles/become-a-vendor'
+import { storingHerbsGuide } from './articles/how-to-store-fresh-herbs'
+import { marketBagsGuide } from './articles/best-farmers-market-bags'
+import { tentAndDisplayGuide } from './articles/farmers-market-tent-and-display'
 
 export type { Guide } from './types'
 
@@ -14,13 +17,16 @@ export type { Guide } from './types'
 // buying local → vendors.
 export const guides: Guide[] = [
   beginnersGuide,
+  marketBagsGuide,
   seasonalProduceGuide,
   farmersMarketSeasonGuide,
   storingProduceGuide,
+  storingHerbsGuide,
   snapEbtGuide,
   wicFmnpGuide,
   whyShopLocalGuide,
   becomeAVendorGuide,
+  tentAndDisplayGuide,
 ]
 
 export function getAllGuides(): Guide[] {

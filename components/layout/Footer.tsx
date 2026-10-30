@@ -21,7 +21,9 @@ const footerLinks = {
     { name: "What's in Season", href: '/guides/seasonal-produce-guide' },
     { name: 'Using SNAP/EBT', href: '/guides/snap-ebt-farmers-markets' },
     { name: 'Beginner’s Guide', href: '/guides/beginners-guide' },
+    { name: 'How to Store Fresh Herbs', href: '/guides/how-to-store-fresh-herbs' },
     { name: 'Become a Vendor', href: '/guides/become-a-vendor' },
+    { name: 'Vendor Tent & Display', href: '/guides/farmers-market-tent-and-display' },
   ],
   company: [
     { name: 'About Us', href: '/about' },

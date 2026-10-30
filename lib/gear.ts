@@ -79,6 +79,51 @@ export const GEAR = {
     why: 'Takes tap, chip, and phone payments through a free app, for shoppers who carry no cash.',
     asin: 'B0C29GRRCZ',
   },
+  herbSpinner: {
+    name: 'OXO Good Grips Little Salad & Herb Spinner',
+    why: 'Spins rinsed herbs bone-dry in seconds, and dry leaves are what keep in the fridge.',
+    asin: 'B00005QB5U',
+  },
+  herbCubes: {
+    name: 'Souper Cubes 2-tablespoon freezer tray with lid',
+    why: 'Freezes chopped herbs in oil in two-tablespoon portions, ready to drop straight into a pan.',
+    asin: 'B0C3GVWRWZ',
+  },
+  juteTote: {
+    name: 'KAF Home jute market tote',
+    why: 'Stiff jute stands open on its own, so peaches and tomatoes go in without getting crushed.',
+    asin: 'B08PCDRY4H',
+  },
+  pocketTote: {
+    name: 'CapaBunga 7-pocket farmer’s market tote',
+    why: 'Outside pockets hold a jar of honey, a bottle of cider, or a carton of eggs upright.',
+    asin: 'B07RTS9PKR',
+  },
+  rollingCart: {
+    name: 'dbest products Quik Cart collapsible rolling crate',
+    why: 'Narrow enough for a crowded aisle, rated to 80 lb, and folds flat for the trunk.',
+    asin: 'B074T8WDJV',
+  },
+  sunWall: {
+    name: 'ABCCANOPY 10x10 canopy sun wall',
+    why: 'Hangs on the side facing the afternoon sun or wind, so produce and the vendor stay cooler.',
+    asin: 'B01D71OD88',
+  },
+  tablecloth: {
+    name: 'Obstal 6 ft stretch fitted tablecloths (2 pack)',
+    why: 'Fits a folding table snugly, won’t blow up in the wind, and hides the bins stored underneath.',
+    asin: 'B0BYCCGPNW',
+  },
+  displayCrates: {
+    name: 'Nesting wooden display crates (set of 5)',
+    why: 'Stack or tip them toward shoppers to build height into a flat table.',
+    asin: 'B0DYDNS127',
+  },
+  chalkboardSigns: {
+    name: 'Mini chalkboard signs with easels (20 pack)',
+    why: 'A price on every bin, and easy to change when the zucchini goes two for $3.',
+    asin: 'B07FSZ7NS5',
+  },
 } satisfies Record<string, GearItem>
 
 export type GearKey = keyof typeof GEAR

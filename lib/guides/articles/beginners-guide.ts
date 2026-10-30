@@ -89,7 +89,7 @@ export const beginnersGuide: Guide = {
         'It helps a lot. Vendors often have limited bags, and a reusable tote or basket handles heavy produce far better. Bring a cooler bag too if you are buying meat, dairy, or eggs.',
     },
   ],
-  related: ['seasonal-produce-guide', 'snap-ebt-farmers-markets', 'storing-produce'],
+  related: ['best-farmers-market-bags', 'seasonal-produce-guide', 'storing-produce'],
   cta: {
     heading: 'Ready for your first visit?',
     text: 'Find a farmers market near you and check its hours, directions, and what vendors offer before you go.',

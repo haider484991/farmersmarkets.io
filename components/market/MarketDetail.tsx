@@ -374,6 +374,7 @@ export function MarketDetail({ market, userId, isFavorited = false }: MarketDeta
         notes={visitNotes(paymentMethods)}
         items={gearForMarket(products, market.name)}
         placement="market"
+        more={{ href: '/guides/best-farmers-market-bags', label: 'What to carry your haul home in' }}
       />
 
       {/* Map */}
